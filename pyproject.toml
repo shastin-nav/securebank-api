@@ -1,0 +1,10 @@
+[project]
+name = "securebank-api"
+version = "1.0.0"
+description = "SecureBank API: proyecto transversal SecurePipeline (DevSecOps · UBO)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+addopts = "-ra"

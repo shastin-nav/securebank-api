@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Ciclo DevSecOps SecureBank</title>
+<style>
+@page { size: A4 landscape; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { width: 297mm; height: 210mm; font-family: "DejaVu Sans", Arial, sans-serif; color: #1c2430; background: #fff; padding: 9mm 10mm 7mm; display: flex; flex-direction: column; }
+header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #1c2430; padding-bottom: 3mm; }
+h1 { font-size: 19pt; letter-spacing: -0.3px; }
+h1 span { color: #0b6e4f; }
+.sub { font-size: 8.5pt; color: #4a5566; margin-top: 1mm; }
+.meta { text-align: right; font-size: 7.5pt; color: #4a5566; line-height: 1.45; }
+.bands { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.2mm; margin-top: 4mm; }
+.band { font-size: 7pt; font-weight: bold; text-transform: uppercase; letter-spacing: .6px; padding: 1.2mm 2mm; border-radius: 1.5mm; }
+.left { grid-column: 1 / span 4; background: #e3f2ec; color: #0b6e4f; }
+.mid { grid-column: 5 / span 2; background: #eef0f4; color: #4a5566; }
+.right { grid-column: 7 / span 2; background: #fdeee3; color: #a34a0c; }
+.flow { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.2mm; margin-top: 2mm; }
+.phase { position: relative; background: #1c2430; color: #fff; border-radius: 2mm; padding: 2.2mm 2.5mm; }
+.phase .n { font-size: 7pt; opacity: .7; }
+.phase .t { font-size: 13pt; font-weight: bold; }
+.phase:not(:last-child)::after { content: "▶"; position: absolute; right: -2.3mm; top: 50%; transform: translate(50%, -50%); color: #1c2430; font-size: 8pt; z-index: 2; }
+.phase.l { background: #0b6e4f; } .phase.r { background: #b35412; } .phase.m { background: #3b4658; }
+.cards { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.2mm; margin-top: 2mm; flex: 1; }
+.card { border: 1px solid #cfd6df; border-radius: 2mm; padding: 2.2mm 2.4mm; display: flex; flex-direction: column; gap: 2mm; font-size: 9pt; line-height: 1.34; }
+.lbl { font-size: 6.8pt; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; color: #6b7686; margin-bottom: .6mm; }
+.tools span { display: inline-block; background: #eef0f4; border-radius: 1mm; padding: .4mm 1.4mm; margin: 0 .6mm .9mm 0; font-size: 8pt; }
+.role { margin-top: auto; border-top: 1px dashed #cfd6df; padding-top: 1.6mm; font-weight: bold; color: #1c2430; }
+.gate { font-size: 8pt; color: #9b1c1c; font-weight: bold; }
+.feedback { margin-top: 2.5mm; position: relative; height: 9mm; }
+.feedback svg { width: 100%; height: 100%; }
+.feedback .txt { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -30%); background: #fff; padding: 0 3mm; font-size: 8pt; font-weight: bold; color: #0b6e4f; }
+footer { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 4mm; margin-top: 2.5mm; font-size: 7pt; color: #394455; line-height: 1.4; }
+footer b { color: #1c2430; }
+.ev { font-size: 8pt; color: #394455; background: #f6f8fa; border-left: 2px solid #9aa5b5; padding: 1.2mm 1.6mm; }
+.feedback .txt { white-space: nowrap; }
+</style></head><body>
+<header>
+  <div><h1>Ciclo DevSecOps propuesto · <span>SecureBank</span></h1>
+  <div class="sub">Controles de seguridad automatizados en cada fase del SDLC: cada control es una puerta que detiene el flujo si falla.</div></div>
+  <div class="meta">Sistemas Automatizados DevSecOps · UBO · Sesión 1<br>Proyecto transversal SecurePipeline · securebank-api<br>B. Garrido · A. Ortiz · J. Navarro · E. Santibáñez · Sept. 2026</div>
+</header>
+
+<div class="bands"><div class="band left">◀ Shift Left: prevenir y detectar temprano</div><div class="band mid">Entrega segura</div><div class="band right">Shift Right: vigilar en producción ▶</div></div>
+
+<div class="flow">
+  <div class="phase l"><div class="n">01</div><div class="t">Plan</div></div>
+  <div class="phase l"><div class="n">02</div><div class="t">Code</div></div>
+  <div class="phase l"><div class="n">03</div><div class="t">Build</div></div>
+  <div class="phase l"><div class="n">04</div><div class="t">Test</div></div>
+  <div class="phase m"><div class="n">05</div><div class="t">Release</div></div>
+  <div class="phase m"><div class="n">06</div><div class="t">Deploy</div></div>
+  <div class="phase r"><div class="n">07</div><div class="t">Operate</div></div>
+  <div class="phase r"><div class="n">08</div><div class="t">Monitor</div></div>
+</div>
+
+<div class="cards">
+  <div class="card"><div><div class="lbl">Control</div>Threat modeling con STRIDE sobre el DFD; security stories en el backlog.</div><div class="tools"><div class="lbl">Herramientas</div><span>OWASP Threat Dragon</span><span>draw.io</span></div><div class="ev">Evidencia: docs/threat-model.md + DFD</div><div class="gate">Puerta: toda historia tiene su security story</div><div class="role">Arquitecto + PO + Lead de seguridad</div></div>
+  <div class="card"><div><div class="lbl">Control</div>Secretos bloqueados antes del commit; revisión obligatoria por PR con CODEOWNERS.</div><div class="tools"><div class="lbl">Herramientas</div><span>gitleaks (pre-commit)</span><span>Semgrep en IDE</span><span>GitHub PR</span></div><div class="ev">Evidencia: POL-REPO-001 + CODEOWNERS</div><div class="gate">Puerta: PR sin aprobación no se mergea</div><div class="role">Developer + Reviewer</div></div>
+  <div class="card"><div><div class="lbl">Control</div>SCA de dependencias con versiones fijadas; build reproducible en el CI.</div><div class="tools"><div class="lbl">Herramientas</div><span>GitHub Actions</span><span>pip-audit</span><span>Dependabot</span></div><div class="ev">Métrica: 0 dependencias con CVE crítico</div><div class="gate">Puerta: CVE crítico detiene el build</div><div class="role">Developer + DevSecOps</div></div>
+  <div class="card"><div><div class="lbl">Control</div>Tests unitarios, SAST en cada push y DAST sobre staging.</div><div class="tools"><div class="lbl">Herramientas</div><span>pytest</span><span>Semgrep CI</span><span>OWASP ZAP</span></div><div class="ev">Evidencia: reporte SAST antes/después</div><div class="gate">Puerta: hallazgo HIGH/CRITICAL = pipeline rojo</div><div class="role">QA + DevSecOps</div></div>
+  <div class="card"><div><div class="lbl">Control</div>Artefacto firmado con SBOM adjunto; release aprobado por un humano.</div><div class="tools"><div class="lbl">Herramientas</div><span>Cosign</span><span>Syft (CycloneDX)</span><span>GitHub Releases</span></div><div class="ev">Métrica: 100% de releases con SBOM</div><div class="gate">Puerta: sin firma no hay despliegue</div><div class="role">Release Manager</div></div>
+  <div class="card"><div><div class="lbl">Control</div>Escaneo de IaC y de la imagen; contenedor sin root; secretos inyectados por entorno.</div><div class="tools"><div class="lbl">Herramientas</div><span>Checkov</span><span>Trivy</span><span>GitHub Environments</span></div><div class="ev">Métrica: 0 contenedores como root</div><div class="gate">Puerta: misconfig alta bloquea el deploy</div><div class="role">DevSecOps + SRE</div></div>
+  <div class="card"><div><div class="lbl">Control</div>WAF, RBAC, rotación de secretos, rate limiting y parches.</div><div class="tools"><div class="lbl">Herramientas</div><span>WAF (ModSecurity)</span><span>HashiCorp Vault</span></div><div class="ev">Métrica: secretos rotados ≤ 90 días</div><div class="gate">Puerta: rotación cada 90 días</div><div class="role">SRE + Secret Custodian</div></div>
+  <div class="card"><div><div class="lbl">Control</div>Logs de auditoría centralizados, SIEM, alertas y respuesta a incidentes.</div><div class="tools"><div class="lbl">Herramientas</div><span>Wazuh (SIEM)</span><span>Prometheus + Grafana</span></div><div class="ev">Métrica: MTTD &lt; 15 min</div><div class="gate">Puerta: alerta crítica abre un incidente</div><div class="role">SOC / SRE</div></div>
+</div>
+
+<div class="feedback">
+  <svg viewBox="0 0 1000 30" preserveAspectRatio="none"><path d="M968 2 V18 H32 V6" fill="none" stroke="#0b6e4f" stroke-width="2.2" vector-effect="non-scaling-stroke"/><path d="M26 10 L32 0 L38 10 Z" fill="#0b6e4f"/></svg>
+  <div class="txt">↺ Feedback continuo: cada hallazgo vuelve a Plan como nueva amenaza o security story</div>
+</div>
+
+<footer>
+  <div><b>Principios aplicados:</b> Security as Code (controles versionados en <code>.github/workflows/</code>) · Shift Left + Shift Right = Continuous Security · Responsabilidad compartida entre Dev, QA, Ops y Security.</div>
+  <div><b>Estado en el repositorio:</b> Plan (threat model) ✓ · Code (política POL-REPO-001) ✓ · Build/Test (CI v1.0) ✓ · SAST ✓ · SCA/DAST en sesiones siguientes.</div>
+  <div><b>Costo de detectar tarde:</b> 1× en diseño → ~10× en QA → hasta 100× en producción. Por eso la mayoría de los controles están a la izquierda.</div>
+</footer>
+</body></html>
