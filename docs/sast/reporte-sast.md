@@ -4,7 +4,7 @@
 **Herramienta:** Semgrep 1.95.0 · reglas `p/owasp-top-ten` + reglas propias [`.semgrep/securebank.yml`](../../.semgrep/securebank.yml)
 **Equipo:** Benjamín Garrido · Abdiel Ortiz · Justin Navarro · Emilio Santibáñez
 
-## 1. Pipeline v1.1
+## 1. Pipeline v1.2
 
 ```
 build ──► unit-tests ──► SAST (Semgrep) ✦ ──► package
@@ -14,6 +14,7 @@ build ──► unit-tests ──► SAST (Semgrep) ✦ ──► package
 
 - El job `sast` publica el reporte `sast.sarif` como artefacto `sast-report-<sha>` (7 días).
 - El paso *Security gate* falla si hay hallazgos de severidad ERROR, y `package` no se ejecuta.
+- Desde la v1.2 las acciones de GitHub están fijadas por SHA de commit (ver §3.1).
 
 ## 2. Evidencia de ejecución
 
@@ -21,8 +22,8 @@ build ──► unit-tests ──► SAST (Semgrep) ✦ ──► package
 | :-- | :-- | :-: | :-- | :-- |
 | **Antes** | `b20d8ae` (rama `feat/sast-antes`) | ❌ FAIL | [run 36476277170](https://github.com/shastin-nav/securebank-api/actions/runs/36476277170) | [`sast-before.sarif`](sast-before.sarif) |
 | **Después** | `c0ecf28` (rama `main`) | ✅ PASS | [run 36476238534](https://github.com/shastin-nav/securebank-api/actions/runs/36476238534) | [`sast-after.sarif`](sast-after.sarif) |
+| **Después v1.2** | PR `fix/sesion5-entrega` (acciones por SHA) | ✅ PASS | [run 36486428837](https://github.com/shastin-nav/securebank-api/actions/runs/36486428837) | artefacto `sast-report-<sha>` del run |
 
-> Para completar esta tabla: descarga el artefacto `sast-report-<sha>` de cada run (pestaña *Actions* → run → *Artifacts*), renómbralo a `sast-before.sarif` o `sast-after.sarif`, guárdalo en `docs/sast/` y pega aquí la URL del run. Para ver el resumen de un SARIF: `python scripts/resumen_sarif.py docs/sast/sast-before.sarif`.
 
 ## 3. Hallazgos y clasificación
 
@@ -31,13 +32,24 @@ build ──► unit-tests ──► SAST (Semgrep) ✦ ──► package
 | 1 | `users.py:16` | SQL Injection en `/login` | A03 · Injection | CWE-89 | CRITICAL | AM-04 | `securebank-sql-string-concat` |
 | 2 | `export.py:17` | Command Injection en el exportador de reportes | A03 · Injection | CWE-78 | CRITICAL | AM-12 | `securebank-command-injection-shell-true` |
 | 3 | `view.py:10` | Cross-Site Scripting en la plantilla de bienvenida | A03 · Injection | CWE-79 | HIGH | AM-13 | `securebank-xss-fstring-html` |
-| 4 | `auth.py:15` | Hash MD5 en contraseñas | A02 · Cryptographic Failures | CWE-327 | HIGH | AM-14 | `securebank-weak-hash-md5` |
+| 4 | `auth.py:13` | Hash MD5 en contraseñas | A02 · Cryptographic Failures | CWE-327 | HIGH | AM-14 | `securebank-weak-hash-md5` |
 | 5 | `calc.py:12` | `eval()` sobre entrada del usuario | A03 · Injection (API peligrosa) | CWE-95 | CRITICAL | AM-12 | `securebank-dangerous-eval` |
 
 **Antes:** 5 hallazgos (3 CRITICAL, 2 HIGH) → ❌ FAIL
 **Después:** 0 hallazgos de las reglas propias → ✅ PASS
 
-> Si `p/owasp-top-ten` reporta hallazgos adicionales, aparecerán en el SARIF y en la tabla de §2. Hay que clasificarlos igual que los de arriba.
+### 3.1 Todos los hallazgos del SARIF
+
+Además de nuestras 5 reglas, el registro `p/owasp-top-ten` reporta otros hallazgos. Este es el total de cada SARIF:
+
+| Origen | Antes | Después (v1.1) | Después (v1.2) |
+| :-- | :-: | :-: | :-: |
+| Reglas propias (`.semgrep/`), nivel error | 5 | 0 | 0 |
+| Registro OWASP sobre las mismas 5 líneas vulnerables (`eval-injection`, `subprocess-shell-true`, `md5-used-as-password`, `insecure-hash-algorithm-md5`, `raw-html-format` ×2, `directly-returned-format-string`) | 7 | 0 | 0 |
+| `github-actions-mutable-action-tag` en `ci.yml`, nivel warning | 10 | 10 | 0 (esperado) |
+| **Total** | **22** | **10** | **0** |
+
+Los 10 avisos de `mutable-action-tag` no bloqueaban el pipeline (son warning), pero señalan un riesgo real de cadena de suministro: un tag como `@v4` puede moverse a otro commit. En la v1.2 fijamos cada acción por su SHA (`actions/checkout@11d5960… # v4.4.0`, `actions/setup-python@a26af69… # v5.6.0`, `actions/upload-artifact@ea165f8… # v4.6.2`), que es la recomendación de la lámina 13 de la Sesión 4.
 
 ## 4. Correcciones aplicadas
 
@@ -129,3 +141,4 @@ Cada corrección quedó protegida por un test en [`tests/unit/test_seguridad.py`
 - [x] ② Tabla de clasificación por categoría OWASP (§3)
 - [x] ③ Diff del código corregido (§5 y el propio PR)
 - [x] ④ URL del run del pipeline en verde (§2)
+- [x] Entrega mediante Pull Request (`fix/sesion5-entrega` → `main`)
