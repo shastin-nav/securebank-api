@@ -19,8 +19,8 @@ build ──► unit-tests ──► SAST (Semgrep) ✦ ──► package
 
 | | Commit | Resultado | Run del pipeline | SARIF |
 | :-- | :-- | :-: | :-- | :-- |
-| **Antes** | `feat(ci): etapa SAST con Semgrep` | ❌ FAIL | `PEGAR_URL_DEL_RUN_ROJO` | [`sast-before.sarif`](sast-before.sarif) |
-| **Después** | `fix(sast): corrige las 5 vulnerabilidades` | ✅ PASS | `PEGAR_URL_DEL_RUN_VERDE` | [`sast-after.sarif`](sast-after.sarif) |
+| **Antes** | `b20d8ae` (rama `feat/sast-antes`) | ❌ FAIL | [run 36476277170](https://github.com/shastin-nav/securebank-api/actions/runs/36476277170) | [`sast-before.sarif`](sast-before.sarif) |
+| **Después** | `c0ecf28` (rama `main`) | ✅ PASS | [run 36476238534](https://github.com/shastin-nav/securebank-api/actions/runs/36476238534) | [`sast-after.sarif`](sast-after.sarif) |
 
 > Para completar esta tabla: descarga el artefacto `sast-report-<sha>` de cada run (pestaña *Actions* → run → *Artifacts*), renómbralo a `sast-before.sarif` o `sast-after.sarif`, guárdalo en `docs/sast/` y pega aquí la URL del run. Para ver el resumen de un SARIF: `python scripts/resumen_sarif.py docs/sast/sast-before.sarif`.
 
@@ -125,7 +125,7 @@ Cada corrección quedó protegida por un test en [`tests/unit/test_seguridad.py`
 
 ## 7. Checklist del PR de entrega
 
-- [ ] ① `sast-before.sarif` y `sast-after.sarif` en `docs/sast/`
+- [x] ① `sast-before.sarif` y `sast-after.sarif` en `docs/sast/`
 - [x] ② Tabla de clasificación por categoría OWASP (§3)
 - [x] ③ Diff del código corregido (§5 y el propio PR)
-- [ ] ④ URL del run del pipeline en verde (§2)
+- [x] ④ URL del run del pipeline en verde (§2)
