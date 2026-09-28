@@ -1,21 +1,20 @@
 """Autenticación: hash de contraseñas, login y verificación de JWT."""
 import datetime
 import functools
+import hashlib
 
 import jwt
 from flask import Blueprint, current_app, g, jsonify, request
-from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint("auth", __name__)
 
 
 def hash_password(password):
-    # SS-14 · hash adaptativo con sal aleatoria (por defecto scrypt en Werkzeug)
-    return generate_password_hash(password)
+    return hashlib.md5(password.encode()).hexdigest()
 
 
 def verify_password(password, stored_hash):
-    return check_password_hash(stored_hash, password)
+    return hash_password(password) == stored_hash
 
 
 def issue_token(user):
@@ -37,7 +36,7 @@ def login_required(view):
         header = request.headers.get("Authorization", "")
         if not header.startswith("Bearer "):
             return jsonify(error="token requerido"), 401
-        from . import users  # import local: evita el import circular auth <-> users
+        from . import users
 
         try:
             claims = jwt.decode(header[7:], current_app.config["JWT_SECRET"], algorithms=["HS256"])
@@ -54,7 +53,7 @@ def login_required(view):
 
 @bp.post("/login")
 def login():
-    from . import users  # import local: evita el import circular auth <-> users
+    from . import users
 
     data = request.get_json(silent=True) or {}
     username = str(data.get("username", ""))

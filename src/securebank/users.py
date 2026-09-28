@@ -12,10 +12,10 @@ USERNAME_RE = re.compile(r"^[a-z0-9_.-]{3,32}$")
 
 
 def find_by_username(username):
-    # SS-04 · consulta parametrizada: el driver separa código SQL de datos
-    return get_db().execute(
-        "SELECT id, username, password_hash, nombre, role FROM users WHERE username = ?", (username,)
-    ).fetchone()
+    cursor = get_db().cursor()
+    query = "SELECT id, username, password_hash, nombre, role FROM users WHERE username='" + username + "'"
+    cursor.execute(query)
+    return cursor.fetchone()
 
 
 def find_by_id(user_id):
