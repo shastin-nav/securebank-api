@@ -6,8 +6,6 @@ import jwt
 from flask import Blueprint, current_app, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from . import users
-
 bp = Blueprint("auth", __name__)
 
 
@@ -39,6 +37,8 @@ def login_required(view):
         header = request.headers.get("Authorization", "")
         if not header.startswith("Bearer "):
             return jsonify(error="token requerido"), 401
+        from . import users  # import local: evita el import circular auth <-> users
+
         try:
             claims = jwt.decode(header[7:], current_app.config["JWT_SECRET"], algorithms=["HS256"])
             user = users.find_by_id(int(claims["sub"]))
@@ -54,6 +54,8 @@ def login_required(view):
 
 @bp.post("/login")
 def login():
+    from . import users  # import local: evita el import circular auth <-> users
+
     data = request.get_json(silent=True) or {}
     username = str(data.get("username", ""))
     password = str(data.get("password", ""))

@@ -1,0 +1,20 @@
+# --- Secretos: NUNCA deben subirse ---
+.env
+.env.*
+*.pem
+id_rsa*
+credentials.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+instance/
+*.sqlite
+
+# --- Artefactos del pipeline ---
+dist/
+*.sarif
+!docs/sast/*.sarif

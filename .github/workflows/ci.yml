@@ -1,0 +1,109 @@
+name: SecureBank API · CI v1.1
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+# Mínimo privilegio: el token del pipeline solo puede leer el repo (corrige R1 del pipeline inseguro)
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install (versiones fijadas)
+        run: pip install -r requirements.txt
+
+      - name: Build (compilar el código fuente)
+        run: python -m compileall -q src
+
+  unit-tests:
+    name: unit-tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements-dev.txt
+
+      - name: Unit tests
+        run: python -m pytest --junitxml=test-results.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.sha }}
+          path: test-results.xml
+          retention-days: 7
+
+  sast:
+    name: sast
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Semgrep
+        run: pip install semgrep==1.95.0
+
+      - name: Semgrep scan (reporte SARIF completo)
+        run: |
+          semgrep scan --config p/owasp-top-ten --config .semgrep/ \
+            --sarif --output sast.sarif
+
+      - name: Upload SAST report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-report-${{ github.sha }}
+          path: sast.sarif
+          retention-days: 7
+
+      - name: Security gate (HIGH/CRITICAL detienen el pipeline)
+        run: |
+          semgrep scan --config p/owasp-top-ten --config .semgrep/ \
+            --severity ERROR --error
+
+  package:
+    name: package
+    needs: sast
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package (artefacto versionado con el hash del commit)
+        run: |
+          mkdir -p dist
+          zip -r "dist/securebank-api-${GITHUB_SHA::7}.zip" src requirements.txt Dockerfile README.md
+          sha256sum dist/*.zip > dist/SHA256SUMS
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
