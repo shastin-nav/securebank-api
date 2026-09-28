@@ -22,7 +22,7 @@ build ──► unit-tests ──► SAST (Semgrep) ✦ ──► package
 | :-- | :-- | :-: | :-- | :-- |
 | **Antes** | `b20d8ae` (rama `feat/sast-antes`) | ❌ FAIL | [run 36476277170](https://github.com/shastin-nav/securebank-api/actions/runs/36476277170) | [`sast-before.sarif`](sast-before.sarif) |
 | **Después** | `c0ecf28` (rama `main`) | ✅ PASS | [run 36476238534](https://github.com/shastin-nav/securebank-api/actions/runs/36476238534) | [`sast-after.sarif`](sast-after.sarif) |
-| **Después v1.2** | PR `fix/sesion5-entrega` (acciones por SHA) | ✅ PASS | `PEGAR_URL_DEL_RUN_DEL_PR` | artefacto `sast-report-<sha>` del run |
+| **Después v1.2** | PR `fix/sesion5-entrega` (acciones por SHA) | ✅ PASS | [run 36486428837](https://github.com/shastin-nav/securebank-api/actions/runs/36486428837) | artefacto `sast-report-<sha>` del run |
 
 
 ## 3. Hallazgos y clasificación
