@@ -1,7 +1,7 @@
 # Code Owners (POL-REPO-001 §2). Cada PR que toque estas rutas necesita la aprobación de su dueño.
 # Reemplazar/añadir los usuarios de GitHub de cada integrante del equipo.
-*                     @4Noisy
-/.github/             @4Noisy
-/src/securebank/auth.py       @4Noisy
-/src/securebank/transfers.py  @4Noisy
-/docs/                @4Noisy
+*                     @shastin-nav
+/.github/             @shastin-nav
+/src/securebank/auth.py       @shastin-nav
+/src/securebank/transfers.py  @shastin-nav
+/docs/                @shastin-nav
