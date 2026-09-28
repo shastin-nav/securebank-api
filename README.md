@@ -1,6 +1,6 @@
 # SecureBank API · SecurePipeline
 
-[![CI](https://github.com/4Noisy/POL-REPO-001/actions/workflows/ci.yml/badge.svg)](https://github.com/4Noisy/POL-REPO-001/actions/workflows/ci.yml)
+[![CI](https://github.com/shastin-nav/securebank-api/actions/workflows/ci.yml/badge.svg)](https://github.com/shastin-nav/securebank-api/actions/workflows/ci.yml)
 
 Proyecto transversal del ramo **Sistemas Automatizados DevSecOps** (UBO · Ingeniería Informática, 2026). SecureBank API es una API bancaria didáctica en Python/Flask: login con JWT, cuentas, transferencias, reportes y calculadora de tasas. Sobre ella se construye, sesión a sesión, un pipeline CI/CD seguro.
 
