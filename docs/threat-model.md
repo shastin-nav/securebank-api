@@ -3,7 +3,7 @@
 **Proyecto:** SecurePipeline · repositorio `securebank-api`
 **Sesión:** 03, Threat Modeling y Requisitos de Seguridad · Sistemas Automatizados DevSecOps (UBO)
 **Equipo:** Benjamín Garrido · Abdiel Ortiz · Justin Navarro · Emilio Santibáñez
-**Versión:** 1.0 · **Fecha:** 24-09-2026 · **Próxima revisión:** 22-10-2026, o antes si se agrega un endpoint nuevo o hay un incidente
+**Versión:** 1.1 · **Fecha:** 24-09-2026 · **Última revisión:** 02-11-2026 · **Próxima revisión:** 30-11-2026, o antes si se agrega un endpoint nuevo o hay un incidente
 **Metodología:** STRIDE aplicado a cada flujo del DFD · Riesgo = Probabilidad × Impacto
 
 ---
@@ -50,7 +50,7 @@ Primero se mitigan los ALTO. Un BAJO se puede aceptar formalmente si queda regis
 | AM-04 | T | SQL Injection en login | F5 · 2.0 → D1 | `username` se concatena en la consulta SQL (`' OR '1'='1`). | Alta | Alto | **ALTO** | Consultas parametrizadas + SAST (Semgrep) en cada push | SS-04 |
 | AM-05 | R | Repudio de transferencias | F6 · D2 | El cliente niega haber hecho una transferencia y no hay un registro íntegro que lo pruebe. | Media | Medio | **MEDIO** | Registrar cada transferencia con `userId`, timestamp y resultado; log append-only | SS-05 |
 | AM-06 | I | IDOR en consulta de cuenta | F3 · `GET /accounts/{id}` | Cambiando el `{id}` se ven saldos de cuentas ajenas. | Alta | Alto | **ALTO** | Autorización por recurso: dueño o admin; si no, 403 | SS-06 |
-| AM-07 | I | Secretos en el repositorio | Repo · D3 | Claves de BD o JWT commiteadas (`.env`); quedan para siempre en el historial. | Media | Alto | **ALTO** | Secret scanning + push protection, `.gitignore`, secretos solo en GitHub Secrets o variables de entorno | SS-07 |
+| AM-07 | I | Secretos en el repositorio | Repo · D3 | Claves de BD o JWT commiteadas (`.env`); quedan para siempre en el historial. | Media | Alto | **ALTO** | Secret scanning + push protection, `.gitignore`, secretos solo en GitHub Secrets o variables de entorno. Desde la Sesión 7: Gitleaks como primera etapa del pipeline y pre-commit hook ([`SECRETS.md`](SECRETS.md)) | SS-07 |
 | AM-08 | D | Fuerza bruta que satura `/login` | F1 · TB1 | Un bot lanza miles de intentos por minuto y agota los recursos. | Media | Medio | **MEDIO** | Rate limiting, WAF, CAPTCHA tras N intentos | SS-08 |
 | AM-09 | D | Payload masivo | F3 · TB2 | Un JSON de 100 MB satura el parser de la API. | Baja | Medio | **BAJO** | `MAX_CONTENT_LENGTH` de 16 KB + timeouts del servidor | SS-09 |
 | AM-10 | E | **BOLA en `/transfer`** | F3 · `POST /transfer` | El cliente B envía `originAccount` de la cuenta de A y el backend la acepta sin validar al dueño. | Alta | Alto | **ALTO** | Comparar el `sub` del JWT con el dueño de `originAccount`; si no coinciden, 403 + registro del intento | SS-10 |
@@ -85,3 +85,11 @@ Hay una por amenaza. El backlog priorizado, con criterios de aceptación, está 
 - **AM-09 (BAJO):** mitigado con límite de tamaño. El riesgo residual se acepta.
 - **AM-01 / AM-08:** el rate limiting y el MFA quedan como pendientes para cuando haya WAF (Shift Right, sesiones futuras).
 - **AM-05:** la tabla de movimientos cumple el rol de registro. Moverla a almacenamiento WORM queda pendiente.
+- **Dependencias con CVE conocidos (cadena de suministro):** no estaba en el modelo de la Sesión 3 porque no viene de un flujo del DFD sino de las librerías que usa la API. Queda cubierto por el job `sca` de la Sesión 6 (Trivy + semáforo CVSS, ver [`sca/politica-cvss.md`](sca/politica-cvss.md)). Si en la próxima revisión aparece un CVE que afecte a la API, se agrega como AM-15.
+
+## 8. Historial de revisiones
+
+| Versión | Fecha | Qué cambió | Quién |
+| :-: | :-- | :-- | :-- |
+| 1.0 | 24-09-2026 | Primera versión: 14 amenazas, DFD y caso BOLA | Equipo |
+| 1.1 | 02-11-2026 | Revisión programada. No hay endpoints nuevos, así que las 14 amenazas se mantienen. AM-07 suma Gitleaks (Sesión 7) y se anota el riesgo de dependencias vulnerables, cubierto por SCA (Sesión 6). | Justin Navarro |
