@@ -61,13 +61,13 @@ La API usa HS256 con una clave secreta y no carga llaves PEM, así que en la pr�
 
 | Prueba | Rama | Resultado esperado | Run |
 | :-- | :-- | :-- | :-- |
-| Dependencia vulnerable a propósito: `urllib3==1.22` (CVE-2018-20060, CVSS 9.8) | `feat/sca-antes` | 🔴 `sca` falla, `package` no corre | _(pegar enlace del run)_ |
+| Dependencia vulnerable a propósito: `urllib3==1.22` (CVE-2018-20060, CVSS 9.8) | `feat/sca-antes` | 🔴 `sca` falla, `package` no corre | https://github.com/shastin-nav/securebank-api/actions/runs/41527686580 |
 | Dependencias originales (PyJWT 2.12.1) | `feat/s06-sca-sbom` | 🔴 Bloqueado por un CVE real (ver arriba) | https://github.com/shastin-nav/securebank-api/actions/runs/41526668771 |
-| Dependencias actualizadas (PyJWT 2.15.1, Werkzeug 3.1.9) | `feat/s06-sca-sbom` | 🟢 `sca` pasa y genera los reportes | _(pegar enlace del run)_ |
+| Dependencias actualizadas (PyJWT 2.15.1, Werkzeug 3.1.9) | `feat/s06-sca-sbom` | 🟢 `sca` pasa y genera los reportes | https://github.com/shastin-nav/securebank-api/actions/runs/41527686266 |
 
 La rama `feat/sca-antes` no se mergea nunca; solo existe para mostrar que el bloqueo funciona (igual que `feat/sast-antes` en la Sesión 5).
 
-Los reportes del run verde se descargan del artefacto `sca-reports-<sha>` y se guardan en [`reports/`](../../reports/).
+Los reportes del run verde (commit `c77af54`) están en [`reports/`](../../reports/): SBOM CycloneDX 1.6 y SPDX 2.3 con 10 componentes (Flask, Werkzeug, PyJWT, gunicorn y sus 6 dependencias transitivas) y el reporte de vulnerabilidades en estado **APROBADO**, con 0 CVE conocidos.
 
 ## 6. Cómo correrlo local
 
