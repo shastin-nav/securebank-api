@@ -1,0 +1,16 @@
+{
+  "generado": "2026-11-02T21:22:26Z",
+  "politica": {
+    "bloqueo": "CVSS >= 9.0",
+    "aprobacion": "7.0 <= CVSS < 9.0",
+    "registro": "CVSS < 7.0"
+  },
+  "estado_pipeline": "APROBADO",
+  "resumen": {
+    "total": 0,
+    "bloqueo": 0,
+    "aprobacion": 0,
+    "registro": 0
+  },
+  "hallazgos": []
+}

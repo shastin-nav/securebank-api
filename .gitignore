@@ -25,3 +25,7 @@ gitleaks.tar.gz
 # --- SCA (Sesión 6): carpeta temporal del escaneo ---
 sbom-env/
 .cache/
+
+# --- Archivos de transferencia local ---
+*.bundle
+sca-reports-*.zip
