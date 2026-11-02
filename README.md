@@ -15,17 +15,20 @@ Proyecto transversal del ramo **Sistemas Automatizados DevSecOps** (UBO · Ingen
 | 3 | Threat model (14 amenazas), DFD y security stories | [`docs/threat-model.md`](docs/threat-model.md) · [`docs/security-stories.md`](docs/security-stories.md) |
 | 4 | Pipeline CI v1.0 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | 5 | SAST con Semgrep + reporte antes/después | Job `sast` en el pipeline · [`docs/sast/reporte-sast.md`](docs/sast/reporte-sast.md) |
+| 6 | SCA con Trivy, SBOM (CycloneDX/SPDX) y semáforo CVSS | Job `sca` · [`docs/sca/politica-cvss.md`](docs/sca/politica-cvss.md) · [`reports/`](reports/) |
 
 ## Pipeline
 
 ```
-push / PR ──► build ──► unit-tests ──► SAST (Semgrep) ──► package ──► artefacto dist-<sha> (7 días)
+push / PR ──► build ─┬─► unit-tests ──► SAST (Semgrep) ──────────────┐
+                     └─► SCA (Trivy + SBOM + CVSS) ──► [aprobación] ─┴─► package ──► dist-<sha> (7 días)
 ```
 
 - Se dispara con cada push a cualquier rama y con cada PR a `main`.
 - `permissions: contents: read`: el token del pipeline solo tiene lectura.
 - Dependencias con versión fijada (`requirements.txt`); ningún secreto en el YAML.
 - **SAST:** Semgrep con `p/owasp-top-ten` y reglas propias ([`.semgrep/`](.semgrep/securebank.yml)); los hallazgos HIGH/CRITICAL detienen el pipeline y el reporte SARIF queda como artefacto.
+- **SCA:** Trivy revisa las dependencias (directas y transitivas) contra bases de CVE y genera el SBOM. Semáforo: CVSS ≥ 9.0 bloquea, 7.0–8.9 espera aprobación en el environment `aprobacion-seguridad`, < 7.0 va al backlog.
 - El estado del pipeline es un *status check* obligatorio para mergear a `main`.
 
 ## Estructura
@@ -36,7 +39,8 @@ securebank-api/
 ├── tests/                # pruebas unitarias e integración
 ├── docs/                 # threat model, DFD, diagramas por sesión
 ├── .semgrep/            # reglas SAST propias
-├── scripts/             # utilidades (resumen de SARIF)
+├── scripts/             # utilidades (resumen de SARIF, política CVSS)
+├── reports/             # SBOM y reporte de vulnerabilidades (Sesión 6)
 ├── .github/
 │   ├── CODEOWNERS
 │   └── workflows/ci.yml  # pipeline CI

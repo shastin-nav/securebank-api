@@ -1,4 +1,4 @@
-name: SecureBank API · CI v1.2
+name: SecureBank API · CI v1.3
 
 on:
   push:
@@ -91,9 +91,88 @@ jobs:
           semgrep scan --config p/owasp-top-ten --config .semgrep/ \
             --severity ERROR --error
 
+  # Sesión 6 · SCA: inventario de dependencias (SBOM) + CVE conocidos + semáforo CVSS.
+  # Corre en paralelo a unit-tests/sast para no alargar el pipeline.
+  sca:
+    name: sca
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      requiere_aprobacion: ${{ steps.politica.outputs.requiere_aprobacion }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # Se instalan las dependencias de producción en una carpeta aparte para que Trivy
+      # vea también las transitivas (Jinja2, click, MarkupSafe...), no solo las directas.
+      - name: Instalar dependencias de producción en sbom-env/
+        run: pip install --no-compile --target sbom-env -r requirements.txt
+
+      - name: Trivy · CVE conocidos (JSON)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: rootfs
+          scan-ref: sbom-env
+          scanners: vuln
+          format: json
+          output: reports/trivy-vulns.json
+
+      - name: Trivy · SBOM CycloneDX
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: rootfs
+          scan-ref: sbom-env
+          format: cyclonedx
+          output: reports/securebank-sbom.cdx.json
+          skip-setup-trivy: true
+
+      - name: Trivy · SBOM SPDX
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: rootfs
+          scan-ref: sbom-env
+          format: spdx-json
+          output: reports/securebank-sbom.spdx.json
+          skip-setup-trivy: true
+
+      # Semáforo: CVSS >= 9.0 bloquea · 7.0-8.9 pide aprobación · < 7.0 va al backlog
+      - name: Política CVSS (semáforo)
+        id: politica
+        run: python scripts/politica_cvss.py reports/trivy-vulns.json reports/securebank-vulns
+
+      - name: Upload SCA reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sca-reports-${{ github.sha }}
+          path: reports/
+          retention-days: 7
+
+  # Solo corre si hay CVE con CVSS 7.0-8.9. El environment "aprobacion-seguridad" tiene
+  # revisores obligatorios: el pipeline queda en pausa hasta que el líder técnico apruebe.
+  aprobacion-seguridad:
+    name: aprobacion-seguridad
+    needs: sca
+    if: needs.sca.outputs.requiere_aprobacion == 'true'
+    runs-on: ubuntu-latest
+    environment: aprobacion-seguridad
+    steps:
+      - name: Aprobación registrada
+        run: echo "CVE de severidad alta aceptados por ${{ github.actor }} (ver reporte sca-reports-${{ github.sha }})"
+
   package:
     name: package
-    needs: sast
+    needs: [sast, sca, aprobacion-seguridad]
+    # Se empaqueta solo si SAST y SCA pasaron, y la aprobación se dio o no hizo falta.
+    if: >-
+      always() &&
+      needs.sast.result == 'success' &&
+      needs.sca.result == 'success' &&
+      (needs.aprobacion-seguridad.result == 'success' || needs.aprobacion-seguridad.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0

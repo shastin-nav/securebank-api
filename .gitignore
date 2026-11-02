@@ -18,3 +18,7 @@ instance/
 dist/
 *.sarif
 !docs/sast/*.sarif
+
+# --- SCA (Sesión 6): carpeta temporal del escaneo ---
+sbom-env/
+.cache/
