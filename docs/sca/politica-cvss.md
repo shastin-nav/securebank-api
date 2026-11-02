@@ -42,16 +42,28 @@ Sin esa configuración GitHub crea el environment vacío y el job pasa solo, as�
 
 | Fecha | CVE | Componente | CVSS | Decisión | Estado |
 | :-- | :-- | :-- | :-: | :-- | :-- |
-| — | — | — | — | Sin CVE abiertos al momento de crear la política | — |
+| 02-11-2026 | CVE-2026-102598 (GHSA-g6x2-hccm-hh4m) · `safe_join()` acepta nombres de dispositivo de Windows | Werkzeug 3.1.8 | Moderado (CVSS 4.0) | Verde: iba al backlog, pero el arreglo era un parche menor y se aplicó junto con PyJWT | ✅ Cerrado: Werkzeug 3.1.9 |
 
 Cada vez que el reporte muestre un CVE en verde se agrega una fila aquí.
 
 ## 5. Evidencia
 
+**Primer hallazgo real.** El primer run del job `sca` en esta rama **bloqueó el pipeline** sin que lo forzáramos: la versión de PyJWT que usábamos (la librería que firma los JWT de la API) tenía un CVE crítico.
+
+| Fecha | CVE | Componente | CVSS | Semáforo | Acción |
+| :-- | :-- | :-- | :-: | :-- | :-- |
+| 02-11-2026 | CVE-2026-102268 (GHSA-ffc3-869f-jxw9) · se salta la detección de llaves PEM asimétricas | PyJWT 2.12.1 | 9.1 | 🔴 Bloqueo | Actualizado a PyJWT 2.15.1. Run bloqueado: https://github.com/shastin-nav/securebank-api/actions/runs/41526668771 |
+| 02-11-2026 | Otros 15 avisos de PyJWT 2.12.1 (altos y moderados, casi todos en `PyJWKClient`) | PyJWT 2.12.1 | 3.7 a 7.4 | 🟡 / 🟢 | Se cierran con la misma actualización |
+
+Antes de subir el cambio se corrieron las 41 pruebas con PyJWT 2.15.1 y Werkzeug 3.1.9 (todas pasan) y se revisó en OSV que esas versiones no tengan CVE conocidos.
+
+La API usa HS256 con una clave secreta y no carga llaves PEM, así que en la práctica no estaba expuesta a este CVE. Igual se actualizó: la política no hace excepciones por "no nos afecta" sin una aprobación registrada, y el cambio no rompía nada.
+
 | Prueba | Rama | Resultado esperado | Run |
 | :-- | :-- | :-- | :-- |
 | Dependencia vulnerable a propósito: `urllib3==1.22` (CVE-2018-20060, CVSS 9.8) | `feat/sca-antes` | 🔴 `sca` falla, `package` no corre | _(pegar enlace del run)_ |
-| Dependencias actuales del proyecto | `feat/s06-sca-sbom` | 🟢 `sca` pasa y genera los reportes | _(pegar enlace del run)_ |
+| Dependencias originales (PyJWT 2.12.1) | `feat/s06-sca-sbom` | 🔴 Bloqueado por un CVE real (ver arriba) | https://github.com/shastin-nav/securebank-api/actions/runs/41526668771 |
+| Dependencias actualizadas (PyJWT 2.15.1, Werkzeug 3.1.9) | `feat/s06-sca-sbom` | 🟢 `sca` pasa y genera los reportes | _(pegar enlace del run)_ |
 
 La rama `feat/sca-antes` no se mergea nunca; solo existe para mostrar que el bloqueo funciona (igual que `feat/sast-antes` en la Sesión 5).
 
