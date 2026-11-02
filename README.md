@@ -16,18 +16,20 @@ Proyecto transversal del ramo **Sistemas Automatizados DevSecOps** (UBO · Ingen
 | 4 | Pipeline CI v1.0 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | 5 | SAST con Semgrep + reporte antes/después | Job `sast` en el pipeline · [`docs/sast/reporte-sast.md`](docs/sast/reporte-sast.md) |
 | 6 | SCA con Trivy, SBOM (CycloneDX/SPDX) y semáforo CVSS | Job `sca` · [`docs/sca/politica-cvss.md`](docs/sca/politica-cvss.md) · [`reports/`](reports/) |
+| 7 | Secret scanning con Gitleaks + procedimiento de rotación | Job `secret-scan` · [`.gitleaks.toml`](.gitleaks.toml) · [`docs/SECRETS.md`](docs/SECRETS.md) |
 
 ## Pipeline
 
 ```
-push / PR ──► build ─┬─► unit-tests ──► SAST (Semgrep) ──────────────┐
-                     └─► SCA (Trivy + SBOM + CVSS) ──► [aprobación] ─┴─► package ──► dist-<sha> (7 días)
+push / PR ──► secret-scan (Gitleaks) ──► build ─┬─► unit-tests ──► SAST (Semgrep) ──────────────┐
+                                                └─► SCA (Trivy + SBOM + CVSS) ──► [aprobación] ─┴─► package ──► dist-<sha> (7 días)
 ```
 
 - Se dispara con cada push a cualquier rama y con cada PR a `main`.
 - `permissions: contents: read`: el token del pipeline solo tiene lectura.
 - Dependencias con versión fijada (`requirements.txt`); ningún secreto en el YAML.
 - **SAST:** Semgrep con `p/owasp-top-ten` y reglas propias ([`.semgrep/`](.semgrep/securebank.yml)); los hallazgos HIGH/CRITICAL detienen el pipeline y el reporte SARIF queda como artefacto.
+- **Secret scan:** Gitleaks revisa todo el historial del commit antes que nada; si encuentra un secreto el pipeline se detiene. También corre como pre-commit hook (`pre-commit install`).
 - **SCA:** Trivy revisa las dependencias (directas y transitivas) contra bases de CVE y genera el SBOM. Semáforo: CVSS ≥ 9.0 bloquea, 7.0–8.9 espera aprobación en el environment `aprobacion-seguridad`, < 7.0 va al backlog.
 - El estado del pipeline es un *status check* obligatorio para mergear a `main`.
 
@@ -55,7 +57,7 @@ securebank-api/
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 python -m pytest                       # pruebas
-export SECUREBANK_JWT_SECRET="$(python -c 'import secrets;print(secrets.token_hex(32))')"
+export SECUREBANK_JWT_SECRET="$(python -c 'import secrets;print(secrets.token_hex(32))')"   # o copiar .env.example a .env
 flask --app "securebank:create_app()" run   # con PYTHONPATH=src
 ```
 

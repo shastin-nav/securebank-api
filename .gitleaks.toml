@@ -1,0 +1,35 @@
+# Configuración de Gitleaks · SecureBank API (Sesión 7)
+# Se usan las ~150 reglas oficiales de Gitleaks + reglas propias del proyecto.
+title = "SecureBank API · gitleaks"
+
+[extend]
+useDefault = true
+
+# El secreto con el que se firman los JWT. Si aparece con valor en el código, es un incidente.
+[[rules]]
+id = "securebank-jwt-secret"
+description = "SECUREBANK_JWT_SECRET con valor hardcodeado"
+regex = '''(?i)SECUREBANK_JWT_SECRET["']?\s*[:=]\s*["']([A-Za-z0-9+/_\-]{16,})["']'''
+secretGroup = 1
+entropy = 3.0
+keywords = ["securebank_jwt_secret"]
+
+# Contraseñas escritas directo en el código (password = "...", contraseña: "...").
+[[rules]]
+id = "securebank-hardcoded-password"
+description = "Contraseña hardcodeada en código o configuración"
+regex = '''(?i)\b(?:password|passwd|pwd|contrase(?:ñ|n)a|clave)\s*[:=]\s*["']([^"'\s$][^"'\s]{7,})["']'''
+secretGroup = 1
+entropy = 2.5
+keywords = ["password", "passwd", "pwd", "contraseña", "contrasena", "clave"]
+  [rules.allowlist]
+  # Las pruebas unitarias usan claves inventadas que se arman en tiempo de ejecución.
+  paths = ['''^tests/''']
+
+[allowlist]
+description = "Archivos generados por el pipeline (hashes de paquetes, no secretos)"
+paths = [
+  '''^reports/.*\.json$''',
+  '''^docs/sast/.*\.sarif$''',
+  '''\.gitleaks\.toml$''',
+]
