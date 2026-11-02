@@ -125,9 +125,9 @@ git push --force --all
 
 | Prueba | Rama | Resultado esperado | Run |
 | :-- | :-- | :-- | :-- |
-| Clave JWT hardcodeada | `feat/secret-antes` | 🔴 `secret-scan` falla (regla `securebank-jwt-secret`, exit 1). `build`, `sast`, `sca` y `package` no corren. | _(pegar enlace del run)_ |
-| Repo sin secretos | `feat/s07-secret-scanning` | 🟢 `secret-scan` pasa y el resto del pipeline sigue | _(pegar enlace del run)_ |
-| Pre-commit local | — | El commit con la clave no se crea (`leaks found: 1`) | _(captura)_ |
+| Clave JWT hardcodeada | `feat/secret-antes` | 🔴 `secret-scan` falla (regla `securebank-jwt-secret`, exit 1). `build`, `sast`, `sca` y `package` no corren. | https://github.com/shastin-nav/securebank-api/actions/runs/41526668379 |
+| Repo sin secretos | `feat/s07-secret-scanning` | 🟢 `secret-scan` pasa y el resto del pipeline sigue | https://github.com/shastin-nav/securebank-api/actions/runs/41527686235 |
+| Pre-commit local | — | El commit con la clave no se crea | Probado con `gitleaks protect --staged` sobre un archivo con `SECUREBANK_JWT_SECRET = "..."`: `leaks found: 1`, exit 1 |
 
 **Ciclo de respuesta aplicado a la prueba:**
 
@@ -141,4 +141,4 @@ git push --force --all
 
 | Fecha | Secreto | Motivo | Quién | Run / evidencia |
 | :-- | :-- | :-- | :-- | :-- |
-| 02-11-2026 | `SECUREBANK_JWT_SECRET` (prueba) | Ejercicio de la Sesión 7 | Equipo | _(enlace)_ |
+| 02-11-2026 | `SECUREBANK_JWT_SECRET` (prueba) | Ejercicio de la Sesión 7 | Equipo | https://github.com/shastin-nav/securebank-api/actions/runs/41526668379 |
