@@ -1,6 +1,7 @@
 # --- Secretos: NUNCA deben subirse ---
 .env
 .env.*
+!.env.example
 *.pem
 id_rsa*
 credentials.json
@@ -17,6 +18,8 @@ instance/
 # --- Artefactos del pipeline ---
 dist/
 *.sarif
+gitleaks
+gitleaks.tar.gz
 !docs/sast/*.sarif
 
 # --- SCA (Sesión 6): carpeta temporal del escaneo ---

@@ -1,0 +1,8 @@
+# Hooks locales (Sesión 7). Instalar una vez por clon:
+#   pip install pre-commit && pre-commit install
+# Gitleaks revisa lo que está en stage antes de cada commit y usa .gitleaks.toml.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
