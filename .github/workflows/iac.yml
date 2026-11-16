@@ -1,0 +1,191 @@
+name: SecureBank-Infra · IaC Security
+
+# Sesión 11: commit → IaC scan (Checkov) → gate → terraform plan → apply (manual, con aprobación)
+# Sesión 12: escaneo de manifiestos Kubernetes (kube-score + Checkov) con gate sobre k8s/hardened/
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "infra/**"
+      - "k8s/**"
+      - "scripts/checkov_score.py"
+      - ".github/workflows/iac.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "k8s/**"
+      - "scripts/checkov_score.py"
+      - ".github/workflows/iac.yml"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Ejecutar terraform apply (solo desde main, requiere aprobación del environment)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  CHECKOV_VERSION: "3.4.5"
+  TF_VERSION: "1.9.8"
+  TF_DIR: infra/terraform
+
+jobs:
+  # ------------------------------------------------------------------ Sesión 11
+  iac-scan:
+    name: iac-scan (Checkov + gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: Instalar Checkov (versión fija)
+        run: pip install "checkov==${CHECKOV_VERSION}"
+
+      # --soft-fail: Checkov solo genera el reporte; la decisión la toma el gate del paso siguiente
+      - name: Checkov · Terraform (reporte JSON)
+        run: |
+          mkdir -p reports/iac
+          checkov -d "$TF_DIR" --framework terraform --compact --soft-fail -o json > reports/iac/checkov.json
+
+      - name: Gate IaC · 0 CRITICAL/HIGH y Security Score ≥ 85 %
+        run: |
+          python scripts/checkov_score.py reports/iac/checkov.json \
+            --severity infra/checkov-severity.json --min-score 85 \
+            --markdown reports/iac/score.md --json-out reports/iac/score.json
+      - name: Resumen en el run
+        if: always()
+        run: |
+          echo "## Sesión 11 · IaC Security" >> "$GITHUB_STEP_SUMMARY"
+          cat reports/iac/score.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "sin reporte" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload reporte Checkov
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: checkov-${{ github.sha }}
+          path: reports/iac/
+          retention-days: 30
+
+  plan:
+    name: terraform plan
+    needs: iac-scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    env:
+      # El plan corre sin credenciales reales: el proveedor no llama a AWS (ver versions.tf)
+      TF_VAR_plan_sin_credenciales: "true"
+      AWS_ACCESS_KEY_ID: plan-sin-credenciales
+      AWS_SECRET_ACCESS_KEY: plan-sin-credenciales
+      AWS_EC2_METADATA_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - run: terraform fmt -check -recursive
+      - run: terraform init -input=false
+      - run: terraform validate
+      - name: terraform plan
+        run: |
+          terraform plan -input=false -lock=false -refresh=false -out=tfplan
+          terraform show -no-color tfplan > plan.txt
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: terraform-plan-${{ github.sha }}
+          path: infra/terraform/plan.txt
+          retention-days: 7
+
+  # Solo a mano, desde main y tras la aprobación del environment "produccion-infra".
+  # Credenciales temporales por OIDC (sin llaves estáticas): rol securebank-ci de main.tf.
+  apply:
+    name: terraform apply
+    needs: plan
+    if: github.event_name == 'workflow_dispatch' && inputs.apply && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: produccion-infra
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Verificar configuración
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: |
+          if [ -z "$AWS_ROLE_ARN" ]; then
+            echo "::error::Falta la variable AWS_ROLE_ARN del environment produccion-infra"; exit 1
+          fi
+
+      - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: sa-east-1
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - run: terraform init -input=false
+      - run: terraform plan -input=false -out=tfplan
+      - run: terraform apply -input=false tfplan
+
+  # ------------------------------------------------------------------ Sesión 12
+  k8s-scan:
+    name: k8s-scan (kube-score + Checkov)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: Instalar kube-score y Checkov (versión fija, binario verificado por SHA-256)
+        env:
+          KUBE_SCORE_VERSION: "1.19.0"
+          KUBE_SCORE_SHA256: "a5b10e509bd845f0bc32a529f4e8165c021877f924ee6f6be66678039f75a761"
+        run: |
+          curl -sSfL -o kube-score.tar.gz \
+            "https://github.com/zegl/kube-score/releases/download/v${KUBE_SCORE_VERSION}/kube-score_${KUBE_SCORE_VERSION}_linux_amd64.tar.gz"
+          echo "${KUBE_SCORE_SHA256}  kube-score.tar.gz" | sha256sum -c -
+          tar -xzf kube-score.tar.gz kube-score
+          pip install "checkov==${CHECKOV_VERSION}"
+
+      # Línea base vulnerable: solo se reporta (es el "antes" del laboratorio)
+      - name: Manifiestos vulnerables (k8s/securebank) · solo reporte
+        run: |
+          mkdir -p reports/k8s
+          ./kube-score score k8s/securebank/*.yaml > reports/k8s/kube-score-before.txt || true
+          checkov -d k8s/securebank --framework kubernetes --compact --soft-fail > reports/k8s/checkov-before.txt
+          cat reports/k8s/kube-score-before.txt
+
+      # Entregable: cualquier CRITICAL de kube-score o check fallido de Checkov detiene el pipeline
+      - name: Manifiestos endurecidos (k8s/hardened) · gate
+        run: |
+          ./kube-score score k8s/hardened/*.yaml | tee reports/k8s/kube-score-after.txt
+          checkov -d k8s/hardened --framework kubernetes --compact | tee reports/k8s/checkov-after.txt
+
+      - name: Upload reportes K8s
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: k8s-scan-${{ github.sha }}
+          path: reports/k8s/
+          retention-days: 30
