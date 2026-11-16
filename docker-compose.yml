@@ -1,0 +1,31 @@
+# SecureBank API en local o en el job DAST (Sesión 8): http://localhost:8080
+#   export SECUREBANK_JWT_SECRET="$(python -c 'import secrets;print(secrets.token_hex(32))')"
+#   docker compose up -d --build   ·   curl http://localhost:8080/health
+#   docker compose down -v
+services:
+  api:
+    image: ${SECUREBANK_IMAGE:-securebank:v2-secure}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.v2
+    ports:
+      - "127.0.0.1:8080:8000"   # solo en loopback: el puerto no queda abierto a la red
+    environment:
+      # Sin valor por defecto: si falta, compose falla en vez de arrancar con una clave conocida
+      SECUREBANK_JWT_SECRET: ${SECUREBANK_JWT_SECRET:?definir SECUREBANK_JWT_SECRET}
+    read_only: true            # mismo criterio que readOnlyRootFilesystem en K8s (Sesión 12)
+    tmpfs:
+      - /tmp
+    volumes:
+      - securebank-data:/data
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  securebank-data:
