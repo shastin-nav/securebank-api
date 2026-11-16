@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload secret scan report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: secret-scan-${{ github.sha }}
           path: gitleaks.sarif
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload test report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: test-results-${{ github.sha }}
           path: |
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload SAST report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sast-report-${{ github.sha }}
           path: sast.sarif
@@ -188,7 +188,7 @@ jobs:
 
       - name: Upload SCA reports
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sca-reports-${{ github.sha }}
           path: reports/
@@ -282,7 +282,7 @@ jobs:
           { echo "## Sesión 10 · securebank:v1 vs securebank:v2-secure"; cat comparacion-imagenes.md; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload reportes de imagen
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: image-scan-${{ github.sha }}
           path: |
@@ -297,7 +297,7 @@ jobs:
       - name: Exportar securebank:v2-secure para el job DAST
         run: docker save securebank:v2-secure | gzip > securebank-v2-secure.tar.gz
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: oci-image_${{ github.sha }}
           path: securebank-v2-secure.tar.gz
@@ -360,7 +360,7 @@ jobs:
 
       - name: Upload reporte DAST
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dast-report-${{ github.sha }}
           path: zap-out/zap-report.*
@@ -423,7 +423,7 @@ jobs:
 
       - name: Upload decisión del gate
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: security-gate-${{ github.sha }}
           path: |
@@ -450,7 +450,7 @@ jobs:
           sha256sum dist/*.zip > dist/SHA256SUMS
 
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-${{ github.sha }}
           path: dist/
@@ -526,7 +526,7 @@ jobs:
           cosign sign --yes "$IMG"
           cosign attest --yes --predicate sbom.cdx.json --type cyclonedx "$IMG"
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom-image-${{ github.sha }}
           path: sbom.cdx.json
@@ -595,7 +595,7 @@ jobs:
           grep -n "image:" deploy/deployment.hardened.yaml
           grep -q "$IMG" deploy/deployment.hardened.yaml
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: deploy-manifests-${{ github.sha }}
           path: deploy/
