@@ -352,6 +352,8 @@ jobs:
 
       - name: Logs de la API y limpieza
         if: always()
+        env:
+          SECUREBANK_JWT_SECRET: no-se-usa-al-bajar   # compose exige la variable aunque solo baje el stack
         run: |
           docker compose logs api | tail -50
           docker compose down -v

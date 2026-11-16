@@ -4,9 +4,11 @@
 # Las 6 buenas prácticas de la sesión están marcadas con [BPn] (detalle en docker/REPORT.md).
 
 # ---------- etapa 1: dependencias ----------
-# [BP1] Base mínima (slim) con versión fija, nunca :latest. El digest exacto queda registrado
-#       por el pipeline (Sesión 13) y Dependabot propone las actualizaciones del tag.
-FROM python:3.11.13-slim-bookworm AS deps
+# [BP1] Base mínima (slim) sobre Debian 13 "trixie", nunca :latest. Con bookworm (Debian 12)
+#       Trivy reportaba >100 HIGH heredados del sistema base; trixie es la estable actual.
+#       El digest exacto queda registrado por el pipeline (Sesión 13) y Dependabot propone las
+#       actualizaciones.
+FROM python:3.11-slim-trixie AS deps
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /build
 # [BP4] requirements.txt antes que el código: la capa de dependencias se reutiliza en caché
@@ -14,7 +16,7 @@ COPY requirements.txt .
 RUN pip install --prefix=/install -r requirements.txt
 
 # ---------- etapa 2: runtime ----------
-FROM python:3.11.13-slim-bookworm
+FROM python:3.11-slim-trixie
 
 # [BP2] Solo lo necesario: tini como PID 1 (reenvía señales y recoge procesos zombie),
 #       sin paquetes recomendados y sin la caché de apt. El upgrade aplica los parches de
