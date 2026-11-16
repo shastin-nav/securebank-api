@@ -1,0 +1,33 @@
+# Contexto de build de securebank:v2-secure (Sesión 10): solo entra lo que la imagen necesita.
+# Secretos
+.env
+.env.*
+*.pem
+id_rsa*
+credentials.json
+# Control de versiones y CI
+.git
+.github
+.gitleaks.toml
+.pre-commit-config.yaml
+.semgrep
+# Basura de Python y pruebas
+__pycache__
+*.py[cod]
+.venv
+venv
+.pytest_cache
+.coverage
+coverage.xml
+tests
+instance
+*.sqlite
+# Documentación, reportes, infraestructura (no se ejecutan dentro del contenedor)
+docs
+reports
+infra
+k8s
+policy
+dist
+*.sarif
+*.md

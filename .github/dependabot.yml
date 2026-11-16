@@ -1,0 +1,16 @@
+# Sesión 13 · supply chain: las versiones fijadas (SHA de acciones, imagen base, dependencias)
+# no se quedan congeladas; Dependabot abre un PR por cada actualización y pasa por todo el pipeline.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /docker
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: /infra/terraform
+    schedule: { interval: monthly }

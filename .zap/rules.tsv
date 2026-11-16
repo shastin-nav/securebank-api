@@ -1,0 +1,10 @@
+# Configuración del ZAP Baseline Scan (Sesión 8). Formato: <id>	<IGNORE|WARN|FAIL>	<comentario>
+# Las cabeceras corregidas pasan a FAIL: si vuelven a faltar, el hallazgo reaparece como regresión.
+10020	FAIL	Anti-clickjacking (X-Frame-Options / frame-ancestors)
+10021	FAIL	X-Content-Type-Options ausente
+10038	FAIL	Content-Security-Policy ausente
+10063	FAIL	Permissions-Policy ausente
+10049	WARN	Contenido almacenable en caché
+10036	FAIL	Servidor filtra su versión en la cabecera Server
+90004	WARN	Cross-Origin-Resource-Policy (Spectre / site isolation)
+10035	IGNORE	HSTS: el scan corre por HTTP en loopback; la cabecera se valida en tests/unit/test_dast.py

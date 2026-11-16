@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1
+# securebank:v2-secure · Dockerfile endurecido (Sesión 10)
+# Construir desde la raíz del repo:  docker build -f docker/Dockerfile.v2 -t securebank:v2-secure .
+# Las 6 buenas prácticas de la sesión están marcadas con [BPn] (detalle en docker/REPORT.md).
+
+# ---------- etapa 1: dependencias ----------
+# [BP1] Base mínima (slim) sobre Debian 13 "trixie", nunca :latest. Con bookworm (Debian 12)
+#       Trivy reportaba >100 HIGH heredados del sistema base; trixie es la estable actual.
+#       El digest exacto queda registrado por el pipeline (Sesión 13) y Dependabot propone las
+#       actualizaciones.
+FROM python:3.11-slim-trixie AS deps
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /build
+# [BP4] requirements.txt antes que el código: la capa de dependencias se reutiliza en caché
+COPY requirements.txt .
+RUN pip install --prefix=/install -r requirements.txt
+
+# ---------- etapa 2: runtime ----------
+FROM python:3.11-slim-trixie
+
+# [BP2] Solo lo necesario: tini como PID 1 (reenvía señales y recoge procesos zombie),
+#       sin paquetes recomendados y sin la caché de apt. El upgrade aplica los parches de
+#       seguridad de Debian publicados después de la imagen base (CVE "fixable" del gate).
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && apt-get install -y --no-install-recommends tini \
+ && rm -rf /var/lib/apt/lists/*
+
+# [BP3] Usuario dedicado sin privilegios, con UID fijo (coincide con runAsUser del Deployment K8s)
+RUN groupadd --gid 10001 appuser \
+ && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin appuser
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src \
+    SECUREBANK_DB=/data/securebank.sqlite
+
+COPY --from=deps /install /usr/local
+
+WORKDIR /app
+# [BP5] Solo el código de la app (el .dockerignore de la raíz excluye .env, .git, tests, reportes)
+#       y en propiedad de root: appuser puede leerlo pero no modificarlo
+COPY src/ ./src/
+# Únicas rutas con escritura: la BD SQLite (/data) y la carpeta instance de Flask.
+# Con readOnlyRootFilesystem en K8s, /data se monta como volumen.
+RUN mkdir -p /data /app/src/instance && chown appuser:appuser /data /app/src/instance
+
+USER 10001:10001
+
+# [BP6] Solo el puerto de la aplicación
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+
+# SECUREBANK_JWT_SECRET se inyecta en tiempo de ejecución, nunca se escribe en la imagen.
+# --worker-tmp-dir /dev/shm: gunicorn no necesita escribir en el sistema de archivos raíz.
+ENTRYPOINT ["tini", "--"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--worker-tmp-dir", "/dev/shm", "--access-logfile", "-", "securebank:create_app()"]

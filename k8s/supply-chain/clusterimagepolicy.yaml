@@ -1,0 +1,29 @@
+# Sesión 13 · Detección 03: admission controller de Sigstore (policy-controller).
+# Aunque alguien salte el pipeline, el cluster rechaza cualquier imagen de SecureBank que no
+# esté firmada por el workflow ci.yml de main. Instalación:
+#   helm repo add sigstore https://sigstore.github.io/helm-charts
+#   helm install policy-controller sigstore/policy-controller -n cosign-system --create-namespace
+#   kubectl label namespace securebank policy.sigstore.dev/include=true
+#   kubectl apply -f k8s/supply-chain/clusterimagepolicy.yaml
+apiVersion: policy.sigstore.dev/v1beta1
+kind: ClusterImagePolicy
+metadata:
+  name: securebank-firmada-por-securepipeline
+spec:
+  images:
+    - glob: "ghcr.io/shastin-nav/securebank-api**"
+  authorities:
+    - keyless:
+        url: https://fulcio.sigstore.dev
+        identities:
+          - issuer: https://token.actions.githubusercontent.com
+            subject: https://github.com/shastin-nav/securebank-api/.github/workflows/ci.yml@refs/heads/main
+      ctlog:
+        url: https://rekor.sigstore.dev
+      attestations:
+        - name: sbom-cyclonedx
+          predicateType: https://cyclonedx.org/bom
+          policy:
+            type: cue
+            data: |
+              predicateType: "https://cyclonedx.org/bom"

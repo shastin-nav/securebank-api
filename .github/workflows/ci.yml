@@ -1,4 +1,4 @@
-name: SecureBank API · CI v1.4
+name: SecureBank API · CI v2.0
 
 on:
   push:
@@ -85,15 +85,20 @@ jobs:
       - name: Install
         run: pip install -r requirements-dev.txt
 
-      - name: Unit tests
-        run: python -m pytest --junitxml=test-results.xml
+      # Sesión 9: el coverage es una de las reglas del security gate (mínimo 80 %)
+      - name: Unit tests + coverage
+        run: |
+          python -m pytest --junitxml=test-results.xml \
+            --cov=securebank --cov-report=xml:coverage.xml --cov-report=term
 
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-results-${{ github.sha }}
-          path: test-results.xml
+          path: |
+            test-results.xml
+            coverage.xml
           retention-days: 7
 
   sast:
@@ -201,14 +206,238 @@ jobs:
       - name: Aprobación registrada
         run: echo "CVE de severidad alta aceptados por ${{ github.actor }} (ver reporte sca-reports-${{ github.sha }})"
 
+  # ------------------------------------------------------------------ Sesión 10
+  # Construye securebank:v1 (inseguro) y securebank:v2-secure (endurecido), los escanea con Trivy
+  # y genera la tabla comparativa. La imagen v2 pasa como artefacto al job DAST.
+  image:
+    name: image (build + Trivy v1 vs v2-secure)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Build securebank:v1 (Dockerfile inseguro, solo para comparar)
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: docker/Dockerfile.v1
+          tags: securebank:v1
+          load: true
+          push: false
+
+      - name: Build securebank:v2-secure
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: docker/Dockerfile.v2
+          tags: securebank:v2-secure
+          load: true
+          push: false
+
+      - name: Verificar que v2-secure no corre como root
+        run: |
+          usuario=$(docker run --rm --entrypoint id securebank:v2-secure -u)
+          echo "uid dentro del contenedor: $usuario"
+          test "$usuario" = "10001"
+
+      - name: Trivy · securebank:v1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: securebank:v1
+          format: json
+          list-all-pkgs: "true"
+          output: trivy-image-v1.json
+
+      - name: Trivy · securebank:v2-secure
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: securebank:v2-secure
+          format: json
+          list-all-pkgs: "true"
+          output: trivy-image-v2.json
+          skip-setup-trivy: true
+
+      - name: Trivy · tabla HIGH/CRITICAL de ambas imágenes (log)
+        env:
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy  # misma BD que bajó trivy-action
+        run: |
+          for img in securebank:v1 securebank:v2-secure; do
+            echo "::group::trivy image $img"
+            trivy image --skip-db-update --severity HIGH,CRITICAL --format table "$img" | tee "trivy-$(echo "$img" | tr ':' '-').txt"
+            echo "::endgroup::"
+          done
+
+      - name: Tabla comparativa v1 vs v2-secure
+        run: |
+          docker image inspect securebank:v1 > inspect-v1.json
+          docker image inspect securebank:v2-secure > inspect-v2.json
+          python3 scripts/comparar_imagenes.py \
+            --v1-trivy trivy-image-v1.json --v1-inspect inspect-v1.json \
+            --v2-trivy trivy-image-v2.json --v2-inspect inspect-v2.json \
+            --out comparacion-imagenes.md
+          { echo "## Sesión 10 · securebank:v1 vs securebank:v2-secure"; cat comparacion-imagenes.md; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload reportes de imagen
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: image-scan-${{ github.sha }}
+          path: |
+            trivy-image-v1.json
+            trivy-image-v2.json
+            trivy-securebank-*.txt
+            inspect-v*.json
+            comparacion-imagenes.md
+          retention-days: 30
+
+      # Nombre con "_" a propósito: no entra en el patrón *-<sha> que descarga el gate
+      - name: Exportar securebank:v2-secure para el job DAST
+        run: docker save securebank:v2-secure | gzip > securebank-v2-secure.tar.gz
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: oci-image_${{ github.sha }}
+          path: securebank-v2-secure.tar.gz
+          retention-days: 1
+
+  # ------------------------------------------------------------------ Sesión 8
+  # ZAP Baseline Scan contra la API corriendo en Docker (misma imagen que se publicará).
+  dast:
+    name: dast (ZAP baseline)
+    needs: image
+    runs-on: ubuntu-latest
+    env:
+      ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:stable
+      ZAP_TARGET: http://localhost:8080/bienvenida?name=cliente
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: oci-image_${{ github.sha }}
+
+      - name: Levantar SecureBank API (docker compose)
+        run: |
+          gunzip -c securebank-v2-secure.tar.gz | docker load
+          # Clave efímera solo para este run: no es un secreto del repo y muere con el job
+          SECUREBANK_JWT_SECRET="$(openssl rand -hex 32)"
+          export SECUREBANK_JWT_SECRET
+          SECUREBANK_IMAGE=securebank:v2-secure docker compose up -d --no-build --wait
+          curl -sSf http://localhost:8080/health
+
+      - name: ZAP Baseline Scan
+        run: |
+          mkdir -p zap-out && cp .zap/rules.tsv zap-out/ && chmod -R 777 zap-out
+          docker pull -q "$ZAP_IMAGE"
+          echo "ZAP: $(docker image inspect --format '{{index .RepoDigests 0}}' "$ZAP_IMAGE")"
+          echo "Inicio del scan (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          set +e
+          docker run --rm --network=host -v "$PWD/zap-out:/zap/wrk:rw" "$ZAP_IMAGE" \
+            zap-baseline.py -t "$ZAP_TARGET" -c rules.tsv -I \
+            -r zap-report.html -J zap-report.json -w zap-report.md
+          codigo=$?
+          set -e
+          echo "zap-baseline exit code: $codigo  (0 = ok · 1 = regla FAIL · 2 = solo WARN · 3 = error)"
+          # Una regla FAIL de .zap/rules.tsv = reaparece un hallazgo ya cerrado → regresión
+          if [ "$codigo" = "1" ] || [ "$codigo" = "3" ]; then exit 1; fi
+
+      - name: Resumen DAST
+        if: always()
+        run: |
+          echo "## Sesión 8 · ZAP Baseline" >> "$GITHUB_STEP_SUMMARY"
+          cat zap-out/zap-report.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "sin reporte" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Logs de la API y limpieza
+        if: always()
+        env:
+          SECUREBANK_JWT_SECRET: no-se-usa-al-bajar   # compose exige la variable aunque solo baje el stack
+        run: |
+          docker compose logs api | tail -50
+          docker compose down -v
+
+      - name: Upload reporte DAST
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dast-report-${{ github.sha }}
+          path: zap-out/zap-report.*
+          retention-days: 30
+
+  # ------------------------------------------------------------------ Sesión 9
+  # Security gate: los reportes de todos los scanners → findings.json → OPA evalúa la política.
+  # Corre aunque un scanner haya fallado: un reporte faltante también es motivo de bloqueo.
+  security-gate:
+    name: security-gate (OPA)
+    needs: [secrets, unit-tests, sast, sca, image, dast]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: "*-${{ github.sha }}"
+          path: artifacts
+
+      - name: Instalar OPA (binario verificado por SHA-256)
+        env:
+          OPA_VERSION: "0.70.0"
+          OPA_SHA256: "00d114b94fdb1606a48cccdfc73c9ccdc62c38721150131ae578d5ff3df5c084"
+        run: |
+          curl -sSfL -o opa "https://github.com/open-policy-agent/opa/releases/download/v${OPA_VERSION}/opa_linux_amd64_static"
+          echo "${OPA_SHA256}  opa" | sha256sum -c -
+          chmod +x opa && ./opa version
+
+      # La política se prueba antes de usarla: casos verde y rojo (policy/security-policy-v1_test.rego)
+      - name: Pruebas de la política
+        run: ./opa test policy/security-policy-v1.rego policy/security-policy-v1_test.rego -v
+
+      - name: Consolidar findings.json
+        run: |
+          S=${{ github.sha }}
+          python3 scripts/consolidar_findings.py --out findings.json \
+            --secrets   "artifacts/secret-scan-$S/gitleaks.sarif" \
+            --sast      "artifacts/sast-report-$S/sast.sarif" \
+            --sca       "artifacts/sca-reports-$S/trivy-vulns.json" \
+            --container "artifacts/image-scan-$S/trivy-image-v2.json" \
+            --dast      "artifacts/dast-report-$S/zap-report.json" \
+            --coverage  "artifacts/test-results-$S/coverage.xml" \
+            --context   policy/context.json
+
+      - name: Evaluar security-policy-v1.rego
+        run: |
+          ./opa eval -d policy/security-policy-v1.rego -i findings.json \
+            'data.securepipeline.gate.decision' --format pretty | tee gate-decision.json
+          {
+            echo "## Sesión 9 · Security gate"
+            echo '```json'; cat gate-decision.json; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # --fail-defined: exit 1 si existe al menos un motivo de bloqueo
+          ./opa eval -d policy/security-policy-v1.rego -i findings.json \
+            --fail-defined 'data.securepipeline.gate.deny[_]' > /dev/null \
+            || { echo "::error::Security gate: BLOCK (ver gate-decision.json)"; exit 1; }
+          echo "Security gate: ALLOW"
+
+      - name: Upload decisión del gate
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-gate-${{ github.sha }}
+          path: |
+            findings.json
+            gate-decision.json
+          retention-days: 30
+
   package:
     name: package
-    needs: [sast, sca, aprobacion-seguridad]
-    # Se empaqueta solo si SAST y SCA pasaron, y la aprobación se dio o no hizo falta.
+    needs: [security-gate, aprobacion-seguridad]
+    # Se empaqueta solo si el gate aprobó, y la aprobación de CVE altos se dio o no hizo falta.
     if: >-
       always() &&
-      needs.sast.result == 'success' &&
-      needs.sca.result == 'success' &&
+      needs.security-gate.result == 'success' &&
       (needs.aprobacion-seguridad.result == 'success' || needs.aprobacion-seguridad.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -217,7 +446,7 @@ jobs:
       - name: Package (artefacto versionado con el hash del commit)
         run: |
           mkdir -p dist
-          zip -r "dist/securebank-api-${GITHUB_SHA::7}.zip" src requirements.txt Dockerfile README.md
+          zip -r "dist/securebank-api-${GITHUB_SHA::7}.zip" src requirements.txt docker/Dockerfile.v2 docker-compose.yml README.md
           sha256sum dist/*.zip > dist/SHA256SUMS
 
       - name: Upload artifact
@@ -226,3 +455,148 @@ jobs:
           name: dist-${{ github.sha }}
           path: dist/
           retention-days: 7
+
+  # ------------------------------------------------------------------ Sesión 13
+  # Solo en push a main: build reproducible → publicar por digest → SBOM (Syft) → firma y
+  # attestation (Cosign keyless, OIDC de GitHub, entrada en Rekor) → verificación → deploy.
+  publish:
+    name: publish (build + SBOM + firma)
+    needs: package
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.package.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # publicar en ghcr.io
+      id-token: write   # token OIDC para la firma keyless de Cosign
+    outputs:
+      image: ${{ steps.ref.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build y push de securebank:v1
+        id: build
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: docker/Dockerfile.v2
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:v1
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          provenance: mode=max   # attestation de procedencia SLSA generada por BuildKit
+          sbom: false            # el SBOM lo genera Syft y se adjunta con cosign attest
+
+      - name: Registrar el digest (trazabilidad)
+        id: ref
+        run: |
+          echo "image=${IMAGE_NAME}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          echo "Imagen publicada: ${IMAGE_NAME}:v1"
+          echo "Digest inmutable: ${{ steps.build.outputs.digest }}"
+          echo "### Imagen publicada"$'\n'"\`${IMAGE_NAME}@${{ steps.build.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: SBOM CycloneDX con Syft
+        uses: anchore/sbom-action@7b36ad622f042cab6f59a75c2ac24ccb256e9b45 # v0.20.4
+        with:
+          image: ${{ steps.ref.outputs.image }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          upload-artifact: false
+
+      - name: Componentes en el SBOM
+        run: jq '.components | length' sbom.cdx.json
+
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+
+      # Se firma el DIGEST, no el tag: el tag se puede mover, el digest no.
+      - name: Firma keyless + attestation del SBOM
+        env:
+          IMG: ${{ steps.ref.outputs.image }}
+        run: |
+          cosign sign --yes "$IMG"
+          cosign attest --yes --predicate sbom.cdx.json --type cyclonedx "$IMG"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom-image-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 90
+
+  verify:
+    name: verify (cosign verify + digest)
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      IMG: ${{ needs.publish.outputs.image }}
+      # Solo se aceptan firmas hechas por ESTE workflow en main
+      IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main
+      ISSUER: https://token.actions.githubusercontent.com
+    steps:
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+
+      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Detección 01 · la firma no verifica → exit 1 → pipeline rojo, no hay deploy
+      - name: cosign verify (firma + identidad + Rekor)
+        run: |
+          cosign verify --certificate-identity "$IDENTITY" --certificate-oidc-issuer "$ISSUER" "$IMG" \
+            | jq '.[0] | {digest: .critical.image["docker-manifest-digest"], identity: .optional.Subject, rekor: .optional.Bundle.Payload.logIndex}'
+
+      - name: cosign verify-attestation (SBOM CycloneDX)
+        run: |
+          cosign verify-attestation --type cyclonedx \
+            --certificate-identity "$IDENTITY" --certificate-oidc-issuer "$ISSUER" "$IMG" > /dev/null
+          echo "Attestation CycloneDX verificada para $IMG"
+
+      # Detección 02 · el tag :v1 debe apuntar al mismo digest que se firmó
+      - name: El tag v1 apunta al digest firmado
+        env:
+          DIGEST_FIRMADO: ${{ needs.publish.outputs.digest }}
+          TAG: ghcr.io/${{ github.repository }}:v1
+        run: |
+          actual=$(docker buildx imagetools inspect "$TAG" --format '{{json .Manifest}}' | jq -r .digest)
+          echo "esperado: $DIGEST_FIRMADO"; echo "actual  : $actual"
+          [ "$actual" = "$DIGEST_FIRMADO" ] || { echo "::error::digest mismatch → deploy bloqueado"; exit 1; }
+
+  deploy:
+    name: deploy (manifiesto con digest verificado)
+    needs: [publish, verify]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # Sin cluster en el curso: el job deja el manifiesto listo para `kubectl apply`, con la imagen
+      # fijada al digest que se acaba de verificar. En el cluster, el ClusterImagePolicy de
+      # k8s/supply-chain/ (Detección 03) vuelve a exigir la firma antes de crear el Pod.
+      - name: Renderizar k8s/hardened con el digest firmado
+        env:
+          IMG: ${{ needs.publish.outputs.image }}
+        run: |
+          mkdir -p deploy
+          cp k8s/hardened/*.yaml deploy/
+          sed -i -E "s#ghcr.io/[^ ]+@sha256:0{64}#${IMG}#" deploy/deployment.hardened.yaml
+          grep -n "image:" deploy/deployment.hardened.yaml
+          grep -q "$IMG" deploy/deployment.hardened.yaml
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: deploy-manifests-${{ github.sha }}
+          path: deploy/
+          retention-days: 90

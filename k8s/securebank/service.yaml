@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: securebank-api
+spec:
+  type: NodePort                             # expuesto en todos los nodos
+  selector: { app: securebank-api }
+  ports:
+    - port: 8000
+      targetPort: 8000

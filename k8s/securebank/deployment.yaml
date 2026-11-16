@@ -1,0 +1,27 @@
+# ⚠️ Manifiesto VULNERABLE de SecureBank (Sesión 12 · línea base del laboratorio). NO desplegar fuera de minikube.
+# Los comentarios [Rn] marcan los riesgos que corrige k8s/hardened/deployment.hardened.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: securebank-api
+  labels: { app: securebank-api }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: securebank-api }
+  template:
+    metadata:
+      labels: { app: securebank-api }
+    spec:
+      containers:
+        - name: api
+          image: securebank:latest          # [R1] tag mutable, sin digest
+          ports:
+            - containerPort: 8000
+          securityContext:
+            privileged: true                 # [R2] acceso total al nodo
+            runAsUser: 0                     # [R3] corre como root
+          env:
+            - name: SECUREBANK_JWT_SECRET    # [R4] secreto en texto plano en el manifiesto
+              value: "cambiar-esta-clave-jwt"
+          # [R5] sin resources.limits · [R6] sin readOnlyRootFilesystem · sin capabilities.drop

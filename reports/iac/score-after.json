@@ -1,0 +1,28 @@
+{
+  "passed": 262,
+  "failed": 2,
+  "total": 264,
+  "score": 99.2,
+  "by_severity": {
+    "CRITICAL": 0,
+    "HIGH": 0,
+    "MEDIUM": 1,
+    "LOW": 1
+  },
+  "failed_checks": [
+    {
+      "id": "CKV2_AWS_76",
+      "resource": "aws_lb.alb_public",
+      "name": "Ensure AWS ALB attached WAFv2 WebACL is configured with AMR for Log4j Vulnerability",
+      "file": "/main.tf",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "CKV_AWS_144",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure that S3 bucket has cross-region replication enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    }
+  ]
+}

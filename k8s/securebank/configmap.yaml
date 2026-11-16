@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: securebank-config
+data:
+  SECUREBANK_DB: /app/instance/securebank.sqlite
+  DB_PASSWORD: "admin123"                    # [R4] credencial en un ConfigMap (no cifrado, lo lee cualquiera con get cm)

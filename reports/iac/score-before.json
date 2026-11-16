@@ -1,0 +1,623 @@
+{
+  "passed": 55,
+  "failed": 87,
+  "total": 142,
+  "score": 38.7,
+  "by_severity": {
+    "CRITICAL": 9,
+    "HIGH": 45,
+    "MEDIUM": 6,
+    "LOW": 27
+  },
+  "failed_checks": [
+    {
+      "id": "CKV_AWS_130",
+      "resource": "aws_subnet.subnet_pub",
+      "name": "Ensure VPC subnets do not assign public IP by default",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_24",
+      "resource": "aws_security_group.sg_public",
+      "name": "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV_AWS_260",
+      "resource": "aws_security_group.sg_public",
+      "name": "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV_AWS_382",
+      "resource": "aws_security_group.sg_public",
+      "name": "Ensure no security groups allow egress from 0.0.0.0:0 to port -1",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_23",
+      "resource": "aws_security_group.sg_public",
+      "name": "Ensure every security group and rule has a description",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_23",
+      "resource": "aws_security_group.sg_db",
+      "name": "Ensure every security group and rule has a description",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_79",
+      "resource": "aws_instance.ec2_web",
+      "name": "Ensure Instance Metadata Service Version 1 is not enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_135",
+      "resource": "aws_instance.ec2_web",
+      "name": "Ensure that EC2 is EBS optimized",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_8",
+      "resource": "aws_instance.ec2_web",
+      "name": "Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_88",
+      "resource": "aws_instance.ec2_web",
+      "name": "EC2 instance should not have public IP.",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_126",
+      "resource": "aws_instance.ec2_web",
+      "name": "Ensure that detailed monitoring is enabled for EC2 instances",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_79",
+      "resource": "aws_instance.ec2_worker",
+      "name": "Ensure Instance Metadata Service Version 1 is not enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_135",
+      "resource": "aws_instance.ec2_worker",
+      "name": "Ensure that EC2 is EBS optimized",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_8",
+      "resource": "aws_instance.ec2_worker",
+      "name": "Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_126",
+      "resource": "aws_instance.ec2_worker",
+      "name": "Ensure that detailed monitoring is enabled for EC2 instances",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_189",
+      "resource": "aws_ebs_volume.ebs_volume",
+      "name": "Ensure EBS Volume is encrypted by KMS using a customer managed Key (CMK)",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_3",
+      "resource": "aws_ebs_volume.ebs_volume",
+      "name": "Ensure all data stored in the EBS is securely encrypted",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_16",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure all data stored in the RDS is securely encrypted at rest",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_293",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure that AWS database instances have deletion protection enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_17",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure all data stored in RDS is not publicly accessible",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV_AWS_133",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure that RDS instances has backup policy",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_157",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure that RDS instances have Multi-AZ enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_353",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure that RDS instances have performance insights enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_118",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure that enhanced monitoring is enabled for Amazon RDS instances",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_226",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure DB instance gets all minor upgrades automatically",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_129",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure that respective logs of Amazon Relational Database Service (Amazon RDS) are enabled",
+      "file": "/main.tf",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "CKV_AWS_161",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure RDS database has IAM authentication enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_119",
+      "resource": "aws_dynamodb_table.dynamodb_txn",
+      "name": "Ensure DynamoDB Tables are encrypted using a KMS Customer Managed CMK",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_28",
+      "resource": "aws_dynamodb_table.dynamodb_txn",
+      "name": "Ensure DynamoDB point in time recovery (backup) is enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_7",
+      "resource": "aws_kms_key.kms_key",
+      "name": "Ensure rotation for customer created CMKs is enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_136",
+      "resource": "aws_ecr_repository.ecr_repo",
+      "name": "Ensure that ECR repositories are encrypted using KMS",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_51",
+      "resource": "aws_ecr_repository.ecr_repo",
+      "name": "Ensure ECR Image Tags are immutable",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_163",
+      "resource": "aws_ecr_repository.ecr_repo",
+      "name": "Ensure ECR image scanning on push is enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_286",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure IAM policies does not allow privilege escalation",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_290",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure IAM policies does not allow write access without constraints",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_288",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure IAM policies does not allow data exfiltration",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_62",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure IAM policies that allow full \"*-*\" administrative privileges are not created",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV_AWS_289",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure IAM policies does not allow permissions management / resource exposure without constraints",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_287",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure IAM policies does not allow credentials exposure",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_63",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure no IAM policies documents allow \"*\" as a statement's actions",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV_AWS_355",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure no IAM policies documents allow \"*\" as a statement's resource for restrictable actions",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_273",
+      "resource": "aws_iam_user.iam_user_ci",
+      "name": "Ensure access is controlled through SSO and not AWS IAM defined users",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_290",
+      "resource": "aws_iam_user_policy.ci",
+      "name": "Ensure IAM policies does not allow write access without constraints",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_288",
+      "resource": "aws_iam_user_policy.ci",
+      "name": "Ensure IAM policies does not allow data exfiltration",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_289",
+      "resource": "aws_iam_user_policy.ci",
+      "name": "Ensure IAM policies does not allow permissions management / resource exposure without constraints",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_40",
+      "resource": "aws_iam_user_policy.ci",
+      "name": "Ensure IAM policies are attached only to groups or roles (Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.)",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_355",
+      "resource": "aws_iam_user_policy.ci",
+      "name": "Ensure no IAM policies documents allow \"*\" as a statement's resource for restrictable actions",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_131",
+      "resource": "aws_lb.alb_public",
+      "name": "Ensure that ALB drops HTTP headers",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_150",
+      "resource": "aws_lb.alb_public",
+      "name": "Ensure that Load Balancer has deletion protection enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_91",
+      "resource": "aws_lb.alb_public",
+      "name": "Ensure the ELBv2 (Application/Network) has access logging enabled",
+      "file": "/main.tf",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "CKV_AWS_2",
+      "resource": "aws_lb_listener.http",
+      "name": "Ensure ALB protocol is HTTPS",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_116",
+      "resource": "aws_lambda_function.lambda_api",
+      "name": "Ensure that AWS Lambda function is configured for a Dead Letter Queue(DLQ)",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_117",
+      "resource": "aws_lambda_function.lambda_api",
+      "name": "Ensure that AWS Lambda function is configured inside a VPC",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_115",
+      "resource": "aws_lambda_function.lambda_api",
+      "name": "Ensure that AWS Lambda function is configured for function-level concurrent execution limit",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_272",
+      "resource": "aws_lambda_function.lambda_api",
+      "name": "Ensure AWS Lambda function is configured to validate code-signing",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_50",
+      "resource": "aws_lambda_function.lambda_api",
+      "name": "X-Ray tracing is enabled for Lambda",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_36",
+      "resource": "aws_cloudtrail.cloudtrail",
+      "name": "Ensure CloudTrail log file validation is enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_67",
+      "resource": "aws_cloudtrail.cloudtrail",
+      "name": "Ensure CloudTrail is enabled in all Regions",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_252",
+      "resource": "aws_cloudtrail.cloudtrail",
+      "name": "Ensure CloudTrail defines an SNS Topic",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_251",
+      "resource": "aws_cloudtrail.cloudtrail",
+      "name": "Ensure CloudTrail logging is enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_35",
+      "resource": "aws_cloudtrail.cloudtrail",
+      "name": "Ensure CloudTrail logs are encrypted at rest using KMS CMKs",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV2_AWS_60",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure RDS instance with copy tags to snapshots is enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV2_AWS_6",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure that S3 bucket has a Public Access block",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV2_AWS_6",
+      "resource": "aws_s3_bucket.s3_logs",
+      "name": "Ensure that S3 bucket has a Public Access block",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV2_AWS_62",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure S3 buckets should have event notifications enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV2_AWS_62",
+      "resource": "aws_s3_bucket.s3_logs",
+      "name": "Ensure S3 buckets should have event notifications enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV2_AWS_64",
+      "resource": "aws_kms_key.kms_key",
+      "name": "Ensure KMS key Policy is defined",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_18",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure the S3 bucket has access logging enabled",
+      "file": "/main.tf",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "CKV_AWS_18",
+      "resource": "aws_s3_bucket.s3_logs",
+      "name": "Ensure the S3 bucket has access logging enabled",
+      "file": "/main.tf",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "CKV2_AWS_11",
+      "resource": "aws_vpc.vpc_main",
+      "name": "Ensure VPC flow logging is enabled in all VPCs",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV2_AWS_41",
+      "resource": "aws_instance.ec2_web",
+      "name": "Ensure an IAM role is attached to EC2 instance",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV2_AWS_40",
+      "resource": "aws_iam_role_policy.admin",
+      "name": "Ensure AWS IAM policy does not allow full IAM privileges",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV2_AWS_30",
+      "resource": "aws_db_instance.rds_postgres",
+      "name": "Ensure Postgres RDS as aws_db_instance has Query Logging enabled",
+      "file": "/main.tf",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "CKV2_AWS_28",
+      "resource": "aws_lb.alb_public",
+      "name": "Ensure public facing ALB are protected by WAF",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV2_AWS_12",
+      "resource": "aws_vpc.vpc_main",
+      "name": "Ensure the default security group of every VPC restricts all traffic",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV2_AWS_61",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure that an S3 bucket has a lifecycle configuration",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV2_AWS_61",
+      "resource": "aws_s3_bucket.s3_logs",
+      "name": "Ensure that an S3 bucket has a lifecycle configuration",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV2_AWS_10",
+      "resource": "aws_cloudtrail.cloudtrail",
+      "name": "Ensure CloudTrail trails are integrated with CloudWatch Logs",
+      "file": "/main.tf",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "CKV_AWS_103",
+      "resource": "aws_lb_listener.http",
+      "name": "Ensure that load balancer is using at least TLS 1.2",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_144",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure that S3 bucket has cross-region replication enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV_AWS_144",
+      "resource": "aws_s3_bucket.s3_logs",
+      "name": "Ensure that S3 bucket has cross-region replication enabled",
+      "file": "/main.tf",
+      "severity": "LOW"
+    },
+    {
+      "id": "CKV2_AWS_20",
+      "resource": "aws_lb.alb_public",
+      "name": "Ensure that ALB redirects HTTP requests into HTTPS ones",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_20",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "S3 Bucket has an ACL defined which allows public READ access.",
+      "file": "/main.tf",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "CKV_AWS_21",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure all data stored in the S3 bucket have versioning enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_21",
+      "resource": "aws_s3_bucket.s3_logs",
+      "name": "Ensure all data stored in the S3 bucket have versioning enabled",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_145",
+      "resource": "aws_s3_bucket.s3_backups",
+      "name": "Ensure that S3 buckets are encrypted with KMS by default",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CKV_AWS_145",
+      "resource": "aws_s3_bucket.s3_logs",
+      "name": "Ensure that S3 buckets are encrypted with KMS by default",
+      "file": "/main.tf",
+      "severity": "HIGH"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "service": "securebank-api",
+  "business_criticality": "alta",
+  "exposure_level": "internet",
+  "data_classification": "financiera",
+  "mitigations": [
+    "jwt-exp-15-min",
+    "ownership-check-bola",
+    "payload-max-16kb",
+    "cabeceras-seguridad"
+  ]
+}
