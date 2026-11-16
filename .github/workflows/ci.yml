@@ -1,4 +1,4 @@
-name: SecureBank API · CI v2.0
+name: SecureBank API · CI v2.1
 
 on:
   push:
@@ -462,7 +462,11 @@ jobs:
   publish:
     name: publish (build + SBOM + firma)
     needs: package
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.package.result == 'success'
+    # !cancelled(): sin esto GitHub salta el job porque aprobacion-seguridad (más arriba en la
+    # cadena) se salta cuando no hay CVE altos, aunque package haya terminado bien.
+    if: >-
+      !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.package.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -535,6 +539,7 @@ jobs:
   verify:
     name: verify (cosign verify + digest)
     needs: publish
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -578,6 +583,7 @@ jobs:
   deploy:
     name: deploy (manifiesto con digest verificado)
     needs: [publish, verify]
+    if: ${{ !cancelled() && needs.verify.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
