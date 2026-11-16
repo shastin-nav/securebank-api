@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "commit": "ejemplo-rojo"
+  },
+  "context": {
+    "service": "securebank-api",
+    "business_criticality": "alta",
+    "exposure_level": "internet",
+    "data_classification": "financiera",
+    "mitigations": [
+      "jwt-exp-15-min",
+      "ownership-check-bola",
+      "payload-max-16kb",
+      "cabeceras-seguridad"
+    ]
+  },
+  "secrets": {
+    "status": "ok",
+    "total": 1
+  },
+  "sast": {
+    "status": "ok",
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0
+  },
+  "sca": {
+    "status": "ok",
+    "critical": 0,
+    "high": 4,
+    "medium": 3,
+    "low": 2,
+    "fixable_critical": 0,
+    "fixable_high": 1
+  },
+  "container": {
+    "status": "ok",
+    "critical": 1,
+    "high": 6,
+    "medium": 20,
+    "low": 40,
+    "fixable_critical": 0,
+    "fixable_high": 1
+  },
+  "dast": {
+    "status": "ok",
+    "high": 0,
+    "medium": 1,
+    "low": 2,
+    "info": 3,
+    "alerts": []
+  },
+  "coverage": {
+    "status": "ok",
+    "line_rate": 72.5
+  }
+}
