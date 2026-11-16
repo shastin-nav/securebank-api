@@ -1,0 +1,14 @@
+# Solo dentro del cluster (ClusterIP). La exposición a Internet pasa por el Ingress/ALB con TLS.
+apiVersion: v1
+kind: Service
+metadata:
+  name: securebank-api
+  namespace: securebank
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: securebank-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

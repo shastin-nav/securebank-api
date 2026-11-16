@@ -1,0 +1,101 @@
+# SecureBank API · Deployment endurecido (Sesión 12) — entregable /k8s/hardened/
+# Requisitos previos (README de esta carpeta):
+#   kubectl apply -f k8s/hardened/namespace.yaml
+#   kubectl -n securebank create secret generic securebank-jwt \
+#     --from-literal=jwt-secret="$(python -c 'import secrets;print(secrets.token_hex(32))')"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: securebank-api
+  namespace: securebank
+  labels:
+    app.kubernetes.io/name: securebank-api
+    app.kubernetes.io/part-of: securepipeline
+  annotations:
+    # La rúbrica de la Sesión 12 pide secretKeyRef; el secreto no queda en el manifiesto ni en la imagen.
+    checkov.io/skip1: CKV_K8S_35=Secreto via secretKeyRef (criterio del entregable); montarlo como archivo queda en el backlog
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: securebank-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: securebank-api
+        app.kubernetes.io/part-of: securepipeline
+    spec:
+      serviceAccountName: securebank-sa
+      automountServiceAccountToken: false     # sin token del API server dentro del Pod
+      securityContext:
+        runAsNonRoot: true                    # [01] el kubelet no arranca el contenedor si es root
+        runAsUser: 10001                      #      UID > 1000, igual que USER del Dockerfile.v2
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:                      # las 2 réplicas en nodos distintos
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: securebank-api
+      containers:
+        - name: api
+          # Imagen por DIGEST, nunca :latest. El job "deploy" del pipeline reemplaza este digest por el
+          # que firmó Cosign y verificó (Sesión 13). Para minikube ver k8s/hardened/README.md.
+          image: ghcr.io/shastin-nav/securebank-api@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            readOnlyRootFilesystem: true      # [02] no se pueden instalar binarios ni modificar la app
+            allowPrivilegeEscalation: false   #      sin setuid / sudo
+            privileged: false
+            capabilities:
+              drop: ["ALL"]                   # [03] ninguna capability de Linux
+          env:
+            - name: SECUREBANK_JWT_SECRET     # secreto referenciado, nunca en env.value
+              valueFrom:
+                secretKeyRef:
+                  name: securebank-jwt
+                  key: jwt-secret
+            - name: SECUREBANK_DB
+              value: /data/securebank.sqlite
+          resources:                          # [04] un Pod comprometido no agota el nodo
+            requests:
+              cpu: 100m
+              memory: 128Mi
+              ephemeral-storage: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+              ephemeral-storage: 128Mi
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket: { port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          volumeMounts:                       # únicas rutas con escritura
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: { sizeLimit: 64Mi }        # SQLite de laboratorio; en producción, RDS (Sesión 11)
+        - name: tmp
+          emptyDir: { medium: Memory, sizeLimit: 16Mi }
