@@ -17,8 +17,10 @@ RUN pip install --prefix=/install -r requirements.txt
 FROM python:3.11.13-slim-bookworm
 
 # [BP2] Solo lo necesario: tini como PID 1 (reenvía señales y recoge procesos zombie),
-#       sin paquetes recomendados y sin la caché de apt
+#       sin paquetes recomendados y sin la caché de apt. El upgrade aplica los parches de
+#       seguridad de Debian publicados después de la imagen base (CVE "fixable" del gate).
 RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
  && apt-get install -y --no-install-recommends tini \
  && rm -rf /var/lib/apt/lists/*
 
