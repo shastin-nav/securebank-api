@@ -1,0 +1,43 @@
+name: Sesión 13 · Verificar firma de una imagen
+
+# Evidencia del entregable: ante una imagen NO firmada por el pipeline de main, cosign verify
+# falla y el run queda en rojo. Uso: Actions → "Sesión 13 · Verificar firma de una imagen" →
+# Run workflow → imagen (ej. ghcr.io/shastin-nav/securebank-api:v1 → verde · nginx:1.27 → rojo).
+on:
+  workflow_dispatch:
+    inputs:
+      imagen:
+        description: "Imagen a verificar (tag o @sha256:...)"
+        required: true
+        default: "ghcr.io/shastin-nav/securebank-api:v1"
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      IMAGEN: ${{ inputs.imagen }}
+      IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main
+      ISSUER: https://token.actions.githubusercontent.com
+    steps:
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+
+      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: cosign verify
+        run: |
+          echo "Verificando $IMAGEN contra la identidad $IDENTITY"
+          if cosign verify --certificate-identity "$IDENTITY" --certificate-oidc-issuer "$ISSUER" "$IMAGEN" > verify.json; then
+            echo "✓ Firma válida: la imagen la construyó y firmó ci.yml en main"
+            jq '.[0].critical.image' verify.json
+          else
+            echo "::error::✕ $IMAGEN no tiene una firma válida de SecurePipeline → deploy BLOQUEADO"
+            exit 1
+          fi
