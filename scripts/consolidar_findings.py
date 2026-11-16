@@ -22,8 +22,8 @@ un control que no corrió no puede contarse como aprobado.
 import argparse
 import json
 import os
+import re
 import sys
-import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 SEVERIDADES = ("critical", "high", "medium", "low")
@@ -101,9 +101,17 @@ def dast_desde_zap(reporte):
     return out
 
 
+# Sin parser XML (evita XXE, hallazgo de Semgrep): solo se lee el atributo line-rate del
+# elemento raíz <coverage>, que es lo único que necesita el gate.
+LINE_RATE = re.compile(r'<coverage\b[^>]*?\bline-rate="([0-9.]+)"')
+
+
 def coverage_desde_cobertura(ruta):
-    raiz = ET.parse(ruta).getroot()
-    return {"status": "ok", "line_rate": round(float(raiz.get("line-rate", 0)) * 100, 2)}
+    with open(ruta, encoding="utf-8") as f:
+        m = LINE_RATE.search(f.read(4096))
+    if m is None:
+        return {"status": "missing"}
+    return {"status": "ok", "line_rate": round(float(m.group(1)) * 100, 2)}
 
 
 def consolidar(rutas, contexto=None, metadata=None):

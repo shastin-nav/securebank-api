@@ -14,7 +14,8 @@ WORKDIR /app
 COPY . .
 
 # [P4] pip con caché y como root
-RUN pip3 install --break-system-packages -r requirements.txt
+# (--ignore-installed: pip no puede desinstalar los paquetes de Python que instaló apt)
+RUN pip3 install --break-system-packages --ignore-installed -r requirements.txt
 
 ENV PYTHONPATH=/app/src
 
