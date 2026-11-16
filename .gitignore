@@ -29,3 +29,13 @@ sbom-env/
 # --- Archivos de transferencia local ---
 *.bundle
 sca-reports-*.zip
+
+# --- Sesiones 8-13 ---
+.coverage
+coverage.xml
+findings.json
+zap-out/
+infra/terraform/.build/
+infra/terraform/.terraform/
+infra/terraform/*.tfstate*
+infra/terraform/tfplan

@@ -1,3 +1,8 @@
 # Archivos que Semgrep no analiza
 tests/
 docs/
+# Artefactos INSEGUROS a propósito (laboratorios). Cada uno tiene su scanner dedicado:
+# Dockerfile.v1 → Trivy (Sesión 10) · infra/ → Checkov (Sesión 11) · k8s/securebank → kube-score/Checkov (Sesión 12)
+docker/Dockerfile.v1
+infra/
+k8s/securebank/
