@@ -20,8 +20,8 @@ docker run --rm --network=host -v "$PWD/zap-out:/zap/wrk:rw" ghcr.io/zaproxy/zap
 docker compose down -v
 ```
 
-- El log del job imprime el **digest exacto de la imagen de ZAP** y el **timestamp UTC** de inicio (requisito 3 del entregable).
-- `report.json` queda en el artefacto `dast-report-<sha>` y es la entrada del security gate de la Sesión 9 (requisito 4).
+- **Versión de ZAP y timestamp** (requisito 3), del run [43973218491](https://github.com/shastin-nav/securebank-api/actions/runs/43973218491) de `main` (commit `68c47a0`): ZAP **2.17.0**, imagen `ghcr.io/zaproxy/zaproxy@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af`, inicio del scan **2026-11-16T22:49:57Z**. El log del job imprime ambos datos en cada run.
+- **`report.json` adjunto** (requisito 4): [`reports/dast/zap-report.json`](../../reports/dast/zap-report.json) es el de ese run. En cada run queda además en el artefacto `dast-report-<sha>` y es la entrada del security gate de la Sesión 9.
 - [`.zap/rules.tsv`](../../.zap/rules.tsv): las alertas ya corregidas están en `FAIL`. Si una cabecera vuelve a faltar, el job falla como **regresión**. El resto de las severidades las decide el gate.
 
 ### 1.2 Tabla de hallazgos (estado inicial, `main` antes de este PR)
@@ -43,7 +43,25 @@ No aplican en SecureBank: **cookies inseguras** (la API no usa cookies; el JWT v
 
 ### 1.3 Resultado después de la corrección
 
-Ejecutar el pipeline y pegar aquí el dashboard del reporte HTML (artefacto `dast-report-<sha>`) y el top 3 de alertas restantes. Criterio del gate (Sesión 9): **0 High y 0 Medium**, porque SecureBank es una API financiera expuesta a Internet (`policy/context.json`).
+Run 43973218491 de `main`: `FAIL-NEW: 0 · WARN-NEW: 2 · PASS: 66`.
+
+| Riesgo | Cantidad de alertas |
+| :-- | --: |
+| High | 0 |
+| Medium | 0 |
+| Low | 1 |
+| Informational | 1 |
+
+Alertas restantes (son solo dos, no hay top 3):
+
+| Severidad ZAP | CWE | ID ZAP | URL | Hallazgo | Decisión |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| Low | CWE-693 | 90004 | `/bienvenida` (1) | `Cross-Origin-Embedder-Policy` ausente o inválida | Backlog. La API no incrusta recursos de otros orígenes; ya envía CORP y COOP `same-origin`. |
+| Informational | CWE-524 | 10049 | 4 URLs | Contenido no almacenable en caché | Es el efecto buscado de `Cache-Control: no-store`. No se corrige. |
+
+Criterio del gate (Sesión 9): **0 High y 0 Medium**, porque SecureBank es una API financiera expuesta a Internet (`policy/context.json`). El gate de este run respondió `allow: true`.
+
+> Capturas pendientes: dashboard del reporte HTML (`zap-report.html` del artefacto `dast-report-<sha>`). Se agregan al exportar el PDF.
 
 ### 1.4 Ejercicio BOLA
 
