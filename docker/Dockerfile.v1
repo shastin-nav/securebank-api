@@ -1,0 +1,28 @@
+# ⚠️ securebank:v1 · Dockerfile INSEGURO (Sesión 10, solo para el laboratorio)
+# Se construye y se escanea con Trivy para comparar contra v2-secure. NUNCA se despliega.
+# Cada línea marcada con [Pn] es uno de los problemas que corrige docker/Dockerfile.v2.
+
+# [P1] Imagen base completa y con tag mutable: cientos de paquetes que la API no usa
+FROM ubuntu:latest
+
+# [P2] Paquetes "por si acaso" (SSH, compiladores, curl) y caché de apt dentro de la imagen
+RUN apt-get update && apt-get install -y python3 python3-pip openssh-server curl build-essential vim
+
+WORKDIR /app
+
+# [P3] Copia TODO el contexto (sin .dockerignore efectivo): .git, .env, tests, reportes...
+COPY . .
+
+# [P4] pip con caché y como root
+RUN pip3 install --break-system-packages -r requirements.txt
+
+ENV PYTHONPATH=/app/src
+
+# [P5] Corre como root
+USER root
+
+# [P6] Expone SSH además de la API
+EXPOSE 22 8000
+
+# Servidor de desarrollo de Flask en modo debug (consola interactiva = ejecución remota de código)
+CMD ["python3", "-m", "flask", "--app", "securebank:create_app()", "run", "--host", "0.0.0.0", "--port", "8000", "--debug"]

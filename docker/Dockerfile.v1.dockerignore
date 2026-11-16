@@ -1,0 +1,2 @@
+# Intencionalmente vacío: securebank:v1 representa una imagen construida SIN .dockerignore
+# (BuildKit usa <Dockerfile>.dockerignore en vez del .dockerignore de la raíz).
