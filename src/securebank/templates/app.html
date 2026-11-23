@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SecureBank · Banca en línea</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header>
+    <strong>SecureBank</strong>
+    <span id="quien" hidden></span>
+    <button id="salir" type="button" hidden>Cerrar sesión</button>
+  </header>
+
+  <main>
+    <p id="aviso" role="status" hidden></p>
+
+    <section id="vista-login">
+      <form id="form-login">
+        <h1>Iniciar sesión</h1>
+        <label>Usuario <input name="username" autocomplete="username" required></label>
+        <label>Contraseña <input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Entrar</button>
+      </form>
+      <form id="form-registro">
+        <h2>Crear cuenta</h2>
+        <label>Nombre <input name="nombre" maxlength="80" required></label>
+        <label>Usuario (3-32: a-z 0-9 _ . -) <input name="username" pattern="[a-z0-9_.\-]{3,32}" autocomplete="username" required></label>
+        <label>Contraseña (mínimo 12) <input name="password" type="password" minlength="12" autocomplete="new-password" required></label>
+        <button type="submit">Registrarme</button>
+      </form>
+    </section>
+
+    <section id="vista-banca" hidden>
+      <h1>Mis cuentas</h1>
+      <table>
+        <thead><tr><th>Cuenta</th><th>Saldo</th><th></th></tr></thead>
+        <tbody id="cuentas"></tbody>
+      </table>
+
+      <form id="form-transferir">
+        <h2>Transferir</h2>
+        <label>Desde <select name="originAccount" id="origen" required></select></label>
+        <label>Cuenta destino <input name="targetAccount" inputmode="numeric" required></label>
+        <label>Monto (CLP) <input name="amount" type="number" min="1" max="1000000" step="1" required></label>
+        <button type="submit">Transferir</button>
+      </form>
+
+      <h2>Movimientos <span id="mov-cuenta"></span></h2>
+      <table>
+        <thead><tr><th>Fecha</th><th>Origen</th><th>Destino</th><th>Monto</th></tr></thead>
+        <tbody id="movimientos"></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
