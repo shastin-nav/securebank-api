@@ -11,6 +11,15 @@ def get_account(account_id):
     return get_db().execute("SELECT id, owner_id, balance FROM accounts WHERE id = ?", (account_id,)).fetchone()
 
 
+def open_account(owner_id, balance=0, account_id=None):
+    """Abre una cuenta. Por defecto con saldo 0: registrarse no crea dinero."""
+    account_id = account_id or str(100_000 + owner_id)
+    conn = get_db()
+    conn.execute("INSERT INTO accounts (id, owner_id, balance) VALUES (?, ?, ?)", (account_id, owner_id, balance))
+    conn.commit()
+    return account_id
+
+
 def can_access(account):
     return account["owner_id"] == g.user["id"] or g.user["role"] == "admin"
 

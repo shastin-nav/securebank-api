@@ -4,6 +4,7 @@ import re
 from flask import Blueprint, g, jsonify, request
 
 from . import auth
+from .accounts import open_account
 from .db import get_db
 
 bp = Blueprint("users", __name__)
@@ -45,7 +46,7 @@ def register():
     if username_exists(username):
         return jsonify(error="usuario ya existe"), 409
     user_id = create_user(username, password, nombre)
-    return jsonify(id=user_id, username=username), 201
+    return jsonify(id=user_id, username=username, account=open_account(user_id)), 201
 
 
 def username_exists(username):

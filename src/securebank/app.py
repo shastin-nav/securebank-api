@@ -2,7 +2,9 @@
 import os
 import secrets
 
+import click
 from flask import Flask, jsonify
+from flask.cli import with_appcontext
 
 from . import db
 
@@ -24,9 +26,9 @@ def create_app(config=None):
 
     db.init_app(app)
 
-    from . import accounts, auth, calc, export, transfers, users, view
+    from . import accounts, auth, calc, export, transfers, users, view, web
 
-    for module in (auth, users, accounts, transfers, export, calc, view):
+    for module in (auth, users, accounts, transfers, export, calc, view, web):
         app.register_blueprint(module.bp)
 
     @app.get("/health")
@@ -35,6 +37,7 @@ def create_app(config=None):
 
     register_security_headers(app)
     register_error_handlers(app)
+    app.cli.add_command(seed_demo)
     return app
 
 
@@ -82,3 +85,22 @@ def register_error_handlers(app):
     @app.errorhandler(500)
     def internal_error(_e):
         return jsonify(error="error interno"), 500
+
+
+@click.command("seed-demo")
+@with_appcontext
+def seed_demo():
+    """Datos de demo para el MVP web: ana (cuenta 1001) y benja (cuenta 2001).
+
+    Las contraseñas se generan al azar y se imprimen una sola vez: no hay credenciales fijas en el repo.
+    """
+    from . import accounts, users
+
+    for username, nombre, cuenta, saldo in (("ana", "Ana Pérez", "1001", 500_000), ("benja", "Benjamín Soto", "2001", 10_000)):
+        if users.username_exists(username):
+            click.echo(f"{username}: ya existe, sin cambios")
+            continue
+        password = secrets.token_urlsafe(12)
+        user_id = users.create_user(username, password, nombre)
+        accounts.open_account(user_id, saldo, cuenta)
+        click.echo(f"{username} / {password} · cuenta {cuenta} · saldo {saldo}")

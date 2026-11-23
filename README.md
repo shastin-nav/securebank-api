@@ -91,6 +91,21 @@ docker compose up -d --build && curl http://localhost:8080/health
 opa test policy/security-policy-v1.rego policy/security-policy-v1_test.rego -v
 ```
 
-Endpoints: `POST /login` · `POST /users` · `GET /users/me` · `GET /accounts` · `GET /accounts/<id>` · `GET /accounts/<id>/movements` · `POST /transfer` · `GET /reportes/<nombre>` · `GET /tasas/calcular` · `GET /bienvenida` · `GET /health`
+## MVP web (banca en línea)
+
+`GET /app` es una página mínima sobre la misma API: login, registro, saldo, movimientos y transferencias.
+
+- Sin dependencias nuevas: HTML de Flask + un `app.js` y un `app.css` propios ([`src/securebank/static/`](src/securebank/static/)).
+- CSP propia solo para `/app`: `script-src 'self'`, sin `unsafe-inline` ni CDNs. El resto de la API sigue con `default-src 'none'`.
+- El DOM se arma con `textContent` (sin HTML como texto) y el JWT vive solo en memoria: al recargar hay que volver a entrar.
+- Registrarse abre una cuenta con saldo 0 (registrarse no crea dinero). Para la demo hay usuarios con saldo:
+
+```bash
+docker compose up -d --build
+docker compose exec api flask --app "securebank:create_app()" seed-demo   # imprime ana/benja con claves aleatorias
+# abrir http://localhost:8080/app
+```
+
+Endpoints: `GET /app` · `POST /login` · `POST /users` · `GET /users/me` · `GET /accounts` · `GET /accounts/<id>` · `GET /accounts/<id>/movements` · `POST /transfer` · `GET /reportes/<nombre>` · `GET /tasas/calcular` · `GET /bienvenida` · `GET /health`
 
 > ⚠️ SecureBank es una aplicación **deliberadamente vulnerable** con fines académicos: contiene fallos que se detectan y corrigen en las sesiones del curso. No la despliegues en un entorno real.
