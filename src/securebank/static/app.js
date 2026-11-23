@@ -66,7 +66,10 @@ function salir() {
   token = null;
   for (const id of ["quien", "salir", "vista-banca"]) $(id).hidden = true;
   $("vista-login").hidden = false;
-  $("movimientos").replaceChildren();
+  // Nada del usuario anterior queda en pantalla para el siguiente
+  $("aviso").hidden = true;
+  $("form-transferir").reset();
+  for (const id of ["cuentas", "movimientos", "origen", "mov-cuenta"]) $(id).replaceChildren();
 }
 
 function alEnviar(id, accion) {
