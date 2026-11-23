@@ -510,7 +510,7 @@ jobs:
           echo "### Imagen publicada"$'\n'"\`${IMAGE_NAME}@${{ steps.build.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: SBOM CycloneDX con Syft
-        uses: anchore/sbom-action@7b36ad622f042cab6f59a75c2ac24ccb256e9b45 # v0.20.4
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           image: ${{ steps.ref.outputs.image }}
           format: cyclonedx-json
